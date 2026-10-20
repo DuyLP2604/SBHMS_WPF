@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 E:\PRN212\SBHMS_WPF\SHBMS\App.xaml
-4-1707606787
+112049867380
 
-46-1828344895
+62712011829
 198986609145
-View\CustomerProfilesView.xaml;View\GuestFeedbackView.xaml;View\MainWindow.xaml;View\ModernStyles.xaml;
+View\BindingResources.xaml;View\BookingDetailView.xaml;View\BookingEditorView.xaml;View\BookingsView.xaml;View\CustomerProfilesView.xaml;View\GuestFeedbackView.xaml;View\MainWindow.xaml;View\ModernStyles.xaml;View\OperationsStyles.xaml;View\RoomsView.xaml;View\RoomTypesView.xaml;
 
 False
 

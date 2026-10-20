@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SHBMS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5c20d584b0ae811b585d92f962e9ece92d668169")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9478580db7f13a3d2b918c2286430f91b071182e")]
 [assembly: System.Reflection.AssemblyProductAttribute("SHBMS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SHBMS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,20 +1,33 @@
-﻿
+
 using System.Windows;
+using System.ComponentModel;
+using SHBMS.ViewModel;
 
 namespace SHBMS.View
 {
     public partial class MainWindow : Window
     {
         // Keep views alive when switching
+        private readonly MainViewModel _viewModel = new();
         private readonly CustomerProfilesView _customers = new();
         private readonly GuestFeedbackView _feedback = new();
 
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = _viewModel;
+            _viewModel.PropertyChanged += ModuleNavigationChanged;
 
             // Default page
             ShowCustomerPage();
+        }
+
+        private void ModuleNavigationChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(MainViewModel.CurrentPageKey) || !_viewModel.IsOperationsPage)
+                return;
+            CustomerNavButton.Tag = null;
+            FeedbackNavButton.Tag = null;
         }
 
         // =====================================
@@ -24,6 +37,7 @@ namespace SHBMS.View
             object sender,
             RoutedEventArgs e)
         {
+            _viewModel.ShowLegacyPage("Customers");
             ShowCustomerPage();
         }
 
@@ -43,6 +57,7 @@ namespace SHBMS.View
             object sender,
             RoutedEventArgs e)
         {
+            _viewModel.ShowLegacyPage("Feedback");
             MainContent.Content = _feedback;
 
             // Highlight selected menu
