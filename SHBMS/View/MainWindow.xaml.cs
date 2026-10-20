@@ -10,6 +10,7 @@ namespace SHBMS.View
         private readonly MainViewModel _viewModel = new();
         private readonly CustomerProfilesView _customers = new();
         private readonly GuestFeedbackView _feedback = new();
+        private readonly InvoiceManager _invoiceManager = new();
         private readonly GuestStayView _stays = new();
         private readonly RoomStatusView _rooms = new();
 
@@ -21,20 +22,32 @@ namespace SHBMS.View
             ShowCustomerPage();
         }
 
-        private void ModuleNavigationChanged(object? sender, PropertyChangedEventArgs e)
+        private void ModuleNavigationChanged(
+            object? sender,
+            PropertyChangedEventArgs e)
         {
-            if (e.PropertyName != nameof(MainViewModel.CurrentPageKey) || !_viewModel.IsOperationsPage)
+            if (e.PropertyName != nameof(MainViewModel.CurrentPageKey)
+                || !_viewModel.IsOperationsPage)
                 return;
 
             ResetNavigation();
-            BreadcrumbText.SetCurrentValue(TextBlock.TextProperty, _viewModel.PageTitle);
+            BreadcrumbText.SetCurrentValue(
+                TextBlock.TextProperty,
+                _viewModel.PageTitle);
         }
 
-        private void Navigate(UserControl page, Button navButton, string pageKey, string breadcrumb)
+        private void Navigate(
+            object page,
+            Button navButton,
+            string pageKey,
+            string breadcrumb)
         {
             _viewModel.ShowLegacyPage(pageKey);
             MainContent.Content = page;
-            BreadcrumbText.SetCurrentValue(TextBlock.TextProperty, breadcrumb);
+            BreadcrumbText.SetCurrentValue(
+                TextBlock.TextProperty,
+                breadcrumb);
+
             ResetNavigation();
             navButton.Tag = "Selected";
         }
@@ -43,6 +56,7 @@ namespace SHBMS.View
         {
             CustomerNavButton.Tag = null;
             FeedbackNavButton.Tag = null;
+            InvoiceNavButton.Tag = null;
             StayNavButton.Tag = null;
             RoomNavButton.Tag = null;
         }
@@ -54,22 +68,47 @@ namespace SHBMS.View
 
         private void ShowCustomerPage()
         {
-            Navigate(_customers, CustomerNavButton, "Customers", "Hotel operations / Guest relations");
+            Navigate(
+                _customers,
+                CustomerNavButton,
+                "Customers",
+                "Hotel operations / Guest relations");
         }
 
         private void Feedback_Click(object sender, RoutedEventArgs e)
         {
-            Navigate(_feedback, FeedbackNavButton, "Feedback", "Hotel operations / Guest relations");
+            Navigate(
+                _feedback,
+                FeedbackNavButton,
+                "Feedback",
+                "Hotel operations / Guest relations");
+        }
+
+        private void Invoice_Click(object sender, RoutedEventArgs e)
+        {
+            Navigate(
+                _invoiceManager,
+                InvoiceNavButton,
+                "Invoices",
+                "Hotel operations / Invoice management");
         }
 
         private void Stay_Click(object sender, RoutedEventArgs e)
         {
-            Navigate(_stays, StayNavButton, "GuestStays", "Hotel operations / Front desk");
+            Navigate(
+                _stays,
+                StayNavButton,
+                "GuestStays",
+                "Hotel operations / Front desk");
         }
 
         private void Room_Click(object sender, RoutedEventArgs e)
         {
-            Navigate(_rooms, RoomNavButton, "RoomStatus", "Hotel operations / Rooms");
+            Navigate(
+                _rooms,
+                RoomNavButton,
+                "RoomStatus",
+                "Hotel operations / Rooms");
         }
     }
 }

@@ -161,6 +161,10 @@
                             Style="{StaticResource NavButton}"
                             Click="Feedback_Click" />
 
+                    <Button x:Name="InvoiceNavButton"
+                            Content="$$$  Invoice management"
+                            Style="{StaticResource NavButton}"
+                            Click="Invoice_Click" />
                     <Button x:Name="StayNavButton"
                             Content="⇄   Guest stays"
                             Style="{StaticResource NavButton}"
