@@ -1,11 +1,13 @@
-﻿
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using SHBMS.ViewModel;
 
 namespace SHBMS.View
 {
     public partial class MainWindow : Window
     {
-        // Keep views alive when switching
+        private readonly MainViewModel _viewModel = new();
         private readonly CustomerProfilesView _customers = new();
         private readonly GuestFeedbackView _feedback = new();
         private readonly InvoiceManager _invoiceManager = new();
@@ -13,54 +15,54 @@ namespace SHBMS.View
         public MainWindow()
         {
             InitializeComponent();
-
-            // Default page
+            DataContext = _viewModel;
+            _viewModel.PropertyChanged += ModuleNavigationChanged;
             ShowCustomerPage();
         }
 
-        // =====================================
-        // CUSTOMER PROFILES
-        // =====================================
-        private void Customer_Click(
-            object sender,
-            RoutedEventArgs e)
+        private void ModuleNavigationChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(MainViewModel.CurrentPageKey) || !_viewModel.IsOperationsPage)
+                return;
+
+            ResetNavigation();
+            BreadcrumbText.SetCurrentValue(TextBlock.TextProperty, _viewModel.PageTitle);
+        }
+
+        private void Navigate(object page, Button navButton, string pageKey, string breadcrumb)
+        {
+            _viewModel.ShowLegacyPage(pageKey);
+            MainContent.Content = page;
+            BreadcrumbText.SetCurrentValue(TextBlock.TextProperty, breadcrumb);
+            ResetNavigation();
+            navButton.Tag = "Selected";
+        }
+
+        private void ResetNavigation()
+        {
+            CustomerNavButton.Tag = null;
+            FeedbackNavButton.Tag = null;
+            InvoiceNavButton.Tag = null;
+        }
+
+        private void Customer_Click(object sender, RoutedEventArgs e)
         {
             ShowCustomerPage();
         }
 
         private void ShowCustomerPage()
         {
-            MainContent.Content = _customers;
-
-            // Highlight selected menu
-            CustomerNavButton.Tag = "Selected";
-            FeedbackNavButton.Tag = null;
+            Navigate(_customers, CustomerNavButton, "Customers", "Hotel operations / Guest relations");
         }
 
-        // =====================================
-        // GUEST FEEDBACK
-        // =====================================
-        private void Feedback_Click(
-            object sender,
-            RoutedEventArgs e)
+        private void Feedback_Click(object sender, RoutedEventArgs e)
         {
-            MainContent.Content = _feedback;
-
-            // Highlight selected menu
-            CustomerNavButton.Tag = null;
-            FeedbackNavButton.Tag = "Selected";
+            Navigate(_feedback, FeedbackNavButton, "Feedback", "Hotel operations / Guest relations");
         }
 
-
-        private void Invoice_Click(
-            object sender,
-            RoutedEventArgs e)
+        private void Invoice_Click(object sender, RoutedEventArgs e)
         {
-            MainContent.Content = _invoiceManager;
-            // Highlight selected menu
-            CustomerNavButton.Tag = null;
-            FeedbackNavButton.Tag = null;
-            InvoiceNavButton.Tag = "Selected";
+            Navigate(_invoiceManager, InvoiceNavButton, "Invoices", "Hotel operations / Invoice management");
         }
     }
 }
