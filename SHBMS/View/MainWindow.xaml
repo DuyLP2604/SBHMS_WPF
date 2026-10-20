@@ -165,6 +165,15 @@
                             Content="$$$  Invoice management"
                             Style="{StaticResource NavButton}"
                             Click="Invoice_Click" />
+                    <Button x:Name="StayNavButton"
+                            Content="⇄   Guest stays"
+                            Style="{StaticResource NavButton}"
+                            Click="Stay_Click" />
+
+                    <Button x:Name="RoomNavButton"
+                            Content="▦   Room status"
+                            Style="{StaticResource NavButton}"
+                            Click="Room_Click" />
 
                     <TextBlock Text="BOOKING &amp; INVENTORY"
                                FontSize="10" Foreground="#8299B6" FontWeight="Bold"
