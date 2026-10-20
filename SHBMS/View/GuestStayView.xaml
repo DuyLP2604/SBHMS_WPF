@@ -1,0 +1,451 @@
+<UserControl x:Class="SHBMS.View.GuestStayView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F6FB"
+             FontFamily="Segoe UI"
+             IsVisibleChanged="View_IsVisibleChanged">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ModernStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Small summary card -->
+            <Style x:Key="StatCard"
+                   TargetType="Border"
+                   BasedOn="{StaticResource Card}">
+                <Setter Property="Padding"
+                        Value="16,12" />
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="16,12,16,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- PAGE HEADER -->
+        <StackPanel Grid.Row="0"
+                    Margin="0,0,0,10">
+
+            <TextBlock Text="FRONT DESK"
+                       Foreground="#4169E1"
+                       FontWeight="Bold"
+                       FontSize="10" />
+
+            <TextBlock Text="Guest stays"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="#13233C"
+                       Margin="0,2,0,2" />
+
+            <TextBlock Text="Check guests in, keep track of who is in house, and check them out."
+                       FontSize="12"
+                       Foreground="#718096" />
+        </StackPanel>
+
+        <!-- SUMMARY -->
+        <UniformGrid Grid.Row="1"
+                     Columns="3"
+                     Margin="0,0,0,10">
+
+            <Border Style="{StaticResource StatCard}"
+                    Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock x:Name="InHouseCount"
+                               Text="0"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="#2F54C8" />
+                    <TextBlock Text="In house"
+                               Style="{StaticResource FieldLabel}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource StatCard}"
+                    Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock x:Name="ArrivingCount"
+                               Text="0"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="#B7791F" />
+                    <TextBlock Text="Arriving today"
+                               Style="{StaticResource FieldLabel}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource StatCard}">
+                <StackPanel>
+                    <TextBlock x:Name="DueOutCount"
+                               Text="0"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="#C24154" />
+                    <TextBlock Text="Due out (today or overdue)"
+                               Style="{StaticResource FieldLabel}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- STAYS + ACTIONS -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="370" />
+            </Grid.ColumnDefinitions>
+
+            <!-- STAY LIST -->
+            <Border Grid.Column="0"
+                    Style="{StaticResource Card}"
+                    Padding="14">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Filters -->
+                    <DockPanel Grid.Row="0"
+                               Margin="0,0,0,12">
+
+                        <TextBlock x:Name="ResultText"
+                                   DockPanel.Dock="Right"
+                                   Foreground="#8793A6"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,0,0" />
+
+                        <WrapPanel Orientation="Horizontal">
+                            <TextBox x:Name="SearchBox"
+                                     Width="210"
+                                     Height="35"
+                                     Margin="0,0,8,4"
+                                     ToolTip="Search by guest, room, stay or booking number"
+                                     TextChanged="Filter_Changed" />
+
+                            <ComboBox x:Name="StatusFilter"
+                                      Width="150"
+                                      Height="35"
+                                      Margin="0,0,0,4"
+                                      VerticalContentAlignment="Center"
+                                      SelectionChanged="Filter_Changed" />
+                        </WrapPanel>
+                    </DockPanel>
+
+                    <DataGrid x:Name="StayGrid"
+                              Grid.Row="1"
+                              SelectionChanged="StayGrid_SelectionChanged">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="STAY"
+                                                Binding="{Binding StayId}"
+                                                Width="75" />
+
+                            <DataGridTextColumn Header="GUEST"
+                                                Binding="{Binding GuestName}"
+                                                Width="*" />
+
+                            <DataGridTextColumn Header="ROOM"
+                                                Binding="{Binding RoomText}"
+                                                Width="70" />
+
+                            <DataGridTextColumn Header="TYPE"
+                                                Binding="{Binding RoomTypeName}"
+                                                Width="90" />
+
+                            <DataGridTextColumn Header="ARRIVAL"
+                                                Binding="{Binding ArrivalDate, StringFormat=dd/MM/yyyy}"
+                                                Width="95" />
+
+                            <DataGridTextColumn Header="CHECK-OUT"
+                                                Binding="{Binding ExpectedCheckOut, StringFormat=dd/MM/yyyy}"
+                                                Width="95" />
+
+                            <DataGridTemplateColumn Header="STATUS"
+                                                    Width="115">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="10"
+                                                Padding="10,3"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background"
+                                                            Value="#EEF0F4" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatusText}"
+                                                                     Value="In house">
+                                                            <Setter Property="Background"
+                                                                    Value="#E8EFFF" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}"
+                                                                     Value="Arriving">
+                                                            <Setter Property="Background"
+                                                                    Value="#FFF4DD" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+
+                                            <TextBlock Text="{Binding StatusText}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#344766" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- ACTION PANEL -->
+            <ScrollViewer Grid.Column="1"
+                          VerticalScrollBarVisibility="Auto"
+                          Margin="12,0,0,0">
+                <StackPanel>
+
+                    <!-- CHECK IN -->
+                    <Border Style="{StaticResource Card}"
+                            Padding="18"
+                            Margin="0,0,0,12">
+                        <StackPanel>
+
+                            <TextBlock Text="Check in"
+                                       Style="{StaticResource SectionTitle}" />
+
+                            <TextBlock x:Name="CheckInModeText"
+                                       FontSize="12"
+                                       Foreground="#4169E1"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap"
+                                       Margin="0,3,0,14" />
+
+                            <TextBlock Text="GUEST"
+                                       Style="{StaticResource FieldLabel}" />
+
+                            <ComboBox x:Name="GuestCombo"
+                                      Height="38"
+                                      VerticalContentAlignment="Center"
+                                      Margin="0,0,0,12">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding FullName, Mode=OneWay}" />
+                                            <Run Text="  ·  "
+                                                 Foreground="#8793A6" />
+                                            <Run Text="{Binding CustomerID, Mode=OneWay}"
+                                                 Foreground="#8793A6" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <TextBlock Text="ROOM"
+                                       Style="{StaticResource FieldLabel}" />
+
+                            <ComboBox x:Name="RoomCombo"
+                                      Height="38"
+                                      VerticalContentAlignment="Center"
+                                      DisplayMemberPath="Label" />
+
+                            <TextBlock x:Name="RoomHint"
+                                       FontSize="11"
+                                       Foreground="#8793A6"
+                                       Margin="0,5,0,12" />
+
+                            <TextBlock Text="EXPECTED CHECK-OUT DATE"
+                                       Style="{StaticResource FieldLabel}" />
+
+                            <DatePicker x:Name="CheckOutPicker"
+                                        MinHeight="38"
+                                        VerticalContentAlignment="Center"
+                                        Margin="0,0,0,16" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button x:Name="CheckInButton"
+                                        Grid.Column="0"
+                                        Content="Check in guest"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Click="CheckIn_Click" />
+
+                                <Button Grid.Column="1"
+                                        Content="Clear"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Margin="8,0,0,0"
+                                        Click="ResetCheckIn_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- STAY DETAILS / CHECK OUT -->
+                    <Border Style="{StaticResource Card}"
+                            Padding="18">
+                        <Grid>
+                            <TextBlock x:Name="EmptyDetail"
+                                       Text="Select a stay in the list to see its details and check the guest out."
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       Foreground="#8793A6"
+                                       FontSize="13"
+                                       Margin="0,24"
+                                       HorizontalAlignment="Center" />
+
+                            <StackPanel x:Name="DetailPanel"
+                                        Visibility="Collapsed">
+
+                                <TextBlock x:Name="DetailTitle"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,14" />
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Guest"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0" />
+                                    <TextBlock x:Name="DetailGuest"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C"
+                                               TextWrapping="Wrap" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Room"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0" />
+                                    <TextBlock x:Name="DetailRoom"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Booking"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0" />
+                                    <TextBlock x:Name="DetailBooking"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Checked in"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0" />
+                                    <TextBlock x:Name="DetailCheckIn"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Check-out"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0" />
+                                    <TextBlock x:Name="DetailCheckOut"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Border Height="1"
+                                        Background="#E8EDF5"
+                                        Margin="0,8,0,12" />
+
+                                <TextBlock x:Name="BillCaption"
+                                           Style="{StaticResource FieldLabel}" />
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="DetailNights"
+                                               FontSize="13"
+                                               Foreground="#66758B" />
+                                    <TextBlock x:Name="DetailRoomCharge"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Services"
+                                               FontSize="13"
+                                               Foreground="#66758B" />
+                                    <TextBlock x:Name="DetailServiceCharge"
+                                               Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Grid Margin="0,6,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Total"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="#13233C" />
+                                    <TextBlock x:Name="DetailTotal"
+                                               Grid.Column="1"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="#13233C" />
+                                </Grid>
+
+                                <Button x:Name="CheckOutButton"
+                                        Content="Check out guest"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Click="CheckOut_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

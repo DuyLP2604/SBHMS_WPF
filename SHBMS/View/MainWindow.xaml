@@ -160,6 +160,18 @@
                             Style="{StaticResource NavButton}"
                             Click="Feedback_Click" />
 
+                    <!-- Guest Stays (check-in / check-out) -->
+                    <Button x:Name="StayNavButton"
+                            Content="⇄   Guest stays"
+                            Style="{StaticResource NavButton}"
+                            Click="Stay_Click" />
+
+                    <!-- Room Status -->
+                    <Button x:Name="RoomNavButton"
+                            Content="▦   Room status"
+                            Style="{StaticResource NavButton}"
+                            Click="Room_Click" />
+
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -179,7 +191,8 @@
 
                 <Grid Margin="27,0">
 
-                    <TextBlock Text="Hotel operations / Guest relations"
+                    <TextBlock x:Name="BreadcrumbText"
+                               Text="Hotel operations / Guest relations"
                                VerticalAlignment="Center"
                                Foreground="#62748B"
                                FontSize="12" />
