@@ -160,6 +160,11 @@
                             Style="{StaticResource NavButton}"
                             Click="Feedback_Click" />
 
+                    <Button x:Name="InvoiceNavButton"
+                            Content="$$$  Invoice management"
+                            Style="{StaticResource NavButton}"
+                            Click="Invoice_Click" />
+
                 </StackPanel>
             </DockPanel>
         </Border>

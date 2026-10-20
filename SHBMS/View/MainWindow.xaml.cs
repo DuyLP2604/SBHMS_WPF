@@ -8,6 +8,7 @@ namespace SHBMS.View
         // Keep views alive when switching
         private readonly CustomerProfilesView _customers = new();
         private readonly GuestFeedbackView _feedback = new();
+        private readonly InvoiceManager _invoiceManager = new();
 
         public MainWindow()
         {
@@ -48,6 +49,18 @@ namespace SHBMS.View
             // Highlight selected menu
             CustomerNavButton.Tag = null;
             FeedbackNavButton.Tag = "Selected";
+        }
+
+
+        private void Invoice_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            MainContent.Content = _invoiceManager;
+            // Highlight selected menu
+            CustomerNavButton.Tag = null;
+            FeedbackNavButton.Tag = null;
+            InvoiceNavButton.Tag = "Selected";
         }
     }
 }
