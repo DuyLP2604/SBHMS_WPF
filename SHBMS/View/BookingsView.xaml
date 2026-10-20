@@ -1,0 +1,48 @@
+<UserControl x:Class="SHBMS.View.BookingsView" x:Name="BookingsRoot"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:view="clr-namespace:SHBMS.View">
+    <UserControl.Resources><ResourceDictionary Source="OperationsStyles.xaml"/></UserControl.Resources>
+    <Grid Margin="24,14,24,20">
+        <Grid Visibility="{Binding IsCreating, Converter={StaticResource InverseVisibility}}">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Grid><StackPanel><TextBlock Text="Bookings" FontSize="26" FontWeight="SemiBold" Foreground="#13233C"/><TextBlock Text="Reservations, arrival deadlines and guest details" Style="{StaticResource SmallMuted}" Margin="0,5,0,16"/></StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="+ New booking" Command="{Binding NewBookingCommand}" Style="{StaticResource PrimaryButton}" Visibility="{Binding CanCreate, Converter={StaticResource BoolVisibility}}"/>
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="170"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Search booking ID, customer, phone or employee" Margin="0,0,10,0"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus}" Margin="0,0,10,0"/>
+                <Button Grid.Column="2" Content="View detail" Command="{Binding ViewDetailCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                <Button Grid.Column="3" Content="Delete overdue" Command="{Binding DeleteExpiredCommand}" Style="{StaticResource DangerButton}" Visibility="{Binding CanCreate, Converter={StaticResource BoolVisibility}}" ToolTip="Only overdue bookings that have not checked in can be deleted."/>
+            </Grid>
+            <StackPanel Grid.Row="2"><TextBlock Style="{StaticResource OperationMessage}"/><ProgressBar Style="{StaticResource BusyIndicator}"/><TextBlock Text="{Binding BookingCount, StringFormat={}{0} bookings shown}" Style="{StaticResource SmallMuted}" Margin="0,0,0,9"/></StackPanel>
+            <Border Grid.Row="3" Background="White" CornerRadius="12" Padding="6">
+                <DataGrid ItemsSource="{Binding Bookings}" SelectedItem="{Binding SelectedBooking}" MinHeight="110" EnableRowVirtualization="True" EnableColumnVirtualization="True">
+                    <DataGrid.RowStyle><Style TargetType="DataGridRow"><Setter Property="MinHeight" Value="45"/><Style.Triggers><DataTrigger Binding="{Binding IsOverdueCheckIn}" Value="True"><Setter Property="Background" Value="#FFF1E8"/><Setter Property="Foreground" Value="#9B4D21"/></DataTrigger><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#DDEAFF"/></Trigger></Style.Triggers></Style></DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Booking" Binding="{Binding BookingId}" Width="90"/>
+                        <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="170"/>
+                        <DataGridTextColumn Header="Phone" Binding="{Binding CustomerPhone}" Width="110"/>
+                        <DataGridTextColumn Header="Check-in" Binding="{Binding CheckInDate, StringFormat=dd/MM/yyyy}" Width="105"/>
+                        <DataGridTextColumn Header="Check-out" Binding="{Binding CheckOutDate, StringFormat=dd/MM/yyyy}" Width="105"/>
+                        <DataGridTextColumn Header="Deadline" Binding="{Binding CheckInDeadline, StringFormat=dd/MM HH:mm}" Width="112"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="115"/>
+                        <DataGridTextColumn Header="Rooms" Binding="{Binding TotalRooms}" Width="70"/>
+                        <DataGridTextColumn Header="Total (VND)" Binding="{Binding TotalEstimatedAmount, StringFormat=N0}" Width="130"/>
+                        <DataGridTextColumn Header="Created by" Binding="{Binding EmployeeName}" Width="160"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+            <Border Grid.Row="4" Background="White" CornerRadius="12" Margin="0,14,0,0" Padding="14" Visibility="{Binding SelectedDetail, Converter={StaticResource HasValueVisibility}}">
+                <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="220"/></Grid.RowDefinitions>
+                    <Button Content="Close detail" Command="{Binding CloseDetailCommand}" HorizontalAlignment="Right" Style="{StaticResource SecondaryButton}" Padding="12,6" Margin="0,0,0,8"/>
+                    <view:BookingDetailView Grid.Row="1" DataContext="{Binding SelectedDetail}"/>
+                </Grid>
+            </Border>
+        </Grid>
+        <view:BookingEditorView DataContext="{Binding Editor}" Visibility="{Binding DataContext.IsCreating, ElementName=BookingsRoot, Converter={StaticResource BoolVisibility}}"/>
+    </Grid>
+</UserControl>

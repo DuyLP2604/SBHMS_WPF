@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:helper="clr-namespace:SHBMS.Helper">
+    <BooleanToVisibilityConverter x:Key="BoolVisibility" />
+    <helper:InverseBooleanConverter x:Key="NotBusy" />
+    <helper:InverseVisibilityConverter x:Key="InverseVisibility" />
+    <helper:NullVisibilityConverter x:Key="HasValueVisibility" />
+</ResourceDictionary>
