@@ -20,7 +20,6 @@
         <DataTemplate DataType="{x:Type vm:BookingsViewModel}"><view:BookingsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:RoomsViewModel}"><view:RoomsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:RoomTypesViewModel}"><view:RoomTypesView /></DataTemplate>
-        <!-- Sidebar Button -->
 
         <Style x:Key="NavButton"
                TargetType="Button">
@@ -57,7 +56,6 @@
 
                         <ControlTemplate.Triggers>
 
-                            <!-- Hover -->
                             <Trigger Property="IsMouseOver"
                                      Value="True">
                                 <Setter TargetName="ButtonBorder"
@@ -67,7 +65,6 @@
                                         Value="White" />
                             </Trigger>
 
-                            <!-- Selected -->
                             <Trigger Property="Tag"
                                      Value="Selected">
                                 <Setter TargetName="ButtonBorder"
@@ -95,12 +92,10 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- SIDEBAR -->
         <Border Grid.Column="0"
                 Background="#162A46">
             <DockPanel>
 
-                <!-- Sidebar Footer -->
                 <StackPanel DockPanel.Dock="Bottom"
                             Margin="23,0,23,25">
 
@@ -119,10 +114,8 @@
                                Margin="0,6,0,0" />
                 </StackPanel>
 
-                <!-- Sidebar Content -->
                 <StackPanel>
 
-                    <!-- Logo -->
                     <StackPanel Orientation="Horizontal"
                                 Margin="25,34,20,32">
 
@@ -158,17 +151,25 @@
                                FontWeight="Bold"
                                Margin="27,0,0,12" />
 
-                    <!-- Customer Profiles -->
                     <Button x:Name="CustomerNavButton"
                             Content="♟   Customer profiles"
                             Style="{StaticResource NavButton}"
                             Click="Customer_Click" />
 
-                    <!-- Guest Feedback -->
                     <Button x:Name="FeedbackNavButton"
                             Content="✉   Guest feedback"
                             Style="{StaticResource NavButton}"
                             Click="Feedback_Click" />
+
+                    <Button x:Name="StayNavButton"
+                            Content="⇄   Guest stays"
+                            Style="{StaticResource NavButton}"
+                            Click="Stay_Click" />
+
+                    <Button x:Name="RoomNavButton"
+                            Content="▦   Room status"
+                            Style="{StaticResource NavButton}"
+                            Click="Room_Click" />
 
                     <TextBlock Text="BOOKING &amp; INVENTORY"
                                FontSize="10" Foreground="#8299B6" FontWeight="Bold"
@@ -208,19 +209,16 @@
                         </Button.Style>
                     </Button>
 
-
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- MAIN -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="62" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Top Header -->
             <Border Grid.Row="0"
                     Background="White"
                     BorderBrush="#E4EAF3"
@@ -228,7 +226,8 @@
 
                 <Grid Margin="27,0">
 
-                    <TextBlock Text="{Binding PageTitle}"
+                    <TextBlock x:Name="BreadcrumbText"
+                               Text="{Binding PageTitle}"
                                VerticalAlignment="Center"
                                Foreground="#62748B"
                                FontSize="12" />
@@ -239,26 +238,19 @@
                                    VerticalAlignment="Center" Margin="0,0,8,0" />
                         <ComboBox ItemsSource="{Binding Roles}" SelectedItem="{Binding SelectedRole}"
                                   Width="110" Padding="8,5" VerticalContentAlignment="Center" />
-                    
 
-                       
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Dynamic View -->
-
-            <!-- Main content and toast overlay -->
             <Grid Grid.Row="1">
 
-                <!-- Current view -->
                 <ContentControl x:Name="MainContent"
                                 Visibility="{Binding IsOperationsPage, Converter={StaticResource InverseVisibility}}" />
                 <Grid Visibility="{Binding IsOperationsPage, Converter={StaticResource BoolVisibility}}">
                     <ContentControl Content="{Binding CurrentPage}" />
                 </Grid>
 
-                <!-- Toast notification -->
                 <Border x:Name="ToastBorder"
                         Width="320"
                         MaxWidth="320"
