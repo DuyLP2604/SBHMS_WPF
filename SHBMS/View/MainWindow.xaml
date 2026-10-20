@@ -155,12 +155,19 @@
                             Content="♟   Customer profiles"
                             Style="{StaticResource NavButton}"
                             Click="Customer_Click" />
-
+                    <!-- Menu quản lý yêu cầu dịch vụ FE-08 -->
+                    <Button x:Name="ServiceRequestNavButton"
+                            Content="Service Requests"
+                            Style="{StaticResource NavButton}"
+                            Click="ServiceRequest_Click"/>
                     <Button x:Name="FeedbackNavButton"
                             Content="✉   Guest feedback"
                             Style="{StaticResource NavButton}"
                             Click="Feedback_Click" />
-
+                    <Button x:Name="PromotionsPricingNavButton"
+                            Content="Promotions &amp; Pricing"
+                            Style="{StaticResource NavButton}"
+                            Click="PromotionsPricing_Click"/>
                     <Button x:Name="InvoiceNavButton"
                             Content="$$$  Invoice management"
                             Style="{StaticResource NavButton}"
