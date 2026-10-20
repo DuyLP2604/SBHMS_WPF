@@ -1,0 +1,49 @@
+﻿<Window x:Class="SHBMS.View.LoginView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SBHMS - System Authentication"
+        Height="500" Width="420"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="#162A46"
+        FontFamily="Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary Source="ModernStyles.xaml" />
+    </Window.Resources>
+
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <!-- Card for login -->
+        <Border Style="{StaticResource Card}" Width="360" Padding="28,30,28,30" Background="White" CornerRadius="16">
+            <StackPanel>
+                <!-- Logo & Brand-->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
+                    <Border Background="#4169E1" CornerRadius="11" Width="44" Height="44">
+                        <TextBlock Text="H" FontSize="24" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Margin="12,2,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="SBHMS" Foreground="#13233C" FontSize="22" FontWeight="Bold" LineHeight="22"/>
+                        <TextBlock Text="HOTEL MANAGEMENT" Foreground="#718096" FontSize="9" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Login title -->
+                <TextBlock Text="Welcome back" FontSize="20" FontWeight="Bold" Foreground="#13233C" HorizontalAlignment="Center"/>
+                <TextBlock Text="Sign in to access your hotel workspace" FontSize="12" Foreground="#718096" HorizontalAlignment="Center" Margin="0,4,0,22"/>
+
+                <!-- Username -->
+                <TextBlock Text="USERNAME" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="TxtUsername" Height="40" Margin="0,0,0,16" VerticalContentAlignment="Center"/>
+
+                <!-- Password -->
+                <TextBlock Text="PASSWORD" Style="{StaticResource FieldLabel}"/>
+                <PasswordBox x:Name="TxtPassword" Height="40" Margin="0,0,0,12" VerticalContentAlignment="Center" Padding="12,0" Background="#F9FBFE" BorderBrush="#DCE5F1" BorderThickness="1" Foreground="#13233C" FontSize="13"/>
+
+                <!-- Error attribute -->
+                <TextBlock x:Name="TxtError" Foreground="#C24154" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,14" TextWrapping="Wrap" TextAlignment="Center" MinHeight="16"/>
+
+                <!-- Login -->
+                <Button Content="Sign In" Click="BtnLogin_Click" Style="{StaticResource PrimaryButton}" Height="42" FontSize="14" FontWeight="SemiBold"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
