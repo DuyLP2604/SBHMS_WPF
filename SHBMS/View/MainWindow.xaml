@@ -1,12 +1,251 @@
 ﻿<Window x:Class="SHBMS.View.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SHBMS.View"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="SBHMS - Hotel Operations"
+        Width="1200"
+        Height="760"
+        MinWidth="800"
+        MinHeight="650"
+        WindowStartupLocation="CenterScreen"
+        Background="#F3F6FB"
+        FontFamily="Segoe UI">
 
+    <Window.Resources>
+        <!-- Sidebar Button -->
+
+        <Style x:Key="NavButton"
+               TargetType="Button">
+
+            <Setter Property="Background"
+                    Value="Transparent" />
+            <Setter Property="Foreground"
+                    Value="#CCD8EA" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="Padding"
+                    Value="18,15" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
+            <Setter Property="FontSize"
+                    Value="13" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
+            <Setter Property="Margin"
+                    Value="12,4" />
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+
+                            <ContentPresenter HorizontalAlignment="Left"
+                                              VerticalAlignment="Center" />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="#294465" />
+                                <Setter Property="Foreground"
+                                        Value="White" />
+                            </Trigger>
+
+                            <!-- Selected -->
+                            <Trigger Property="Tag"
+                                     Value="Selected">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="#355780" />
+                                <Setter Property="Foreground"
+                                        Value="White" />
+                                <Setter Property="FontWeight"
+                                        Value="SemiBold" />
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR -->
+        <Border Grid.Column="0"
+                Background="#162A46">
+            <DockPanel>
+
+                <!-- Sidebar Footer -->
+                <StackPanel DockPanel.Dock="Bottom"
+                            Margin="23,0,23,25">
+
+                    <Border Height="1"
+                            Background="#35506C"
+                            Margin="0,0,0,18" />
+
+                    <TextBlock Text="FRONT DESK PORTAL"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="#91A6C2" />
+
+                    <TextBlock Text="SBHMS"
+                               FontSize="12"
+                               Foreground="#E4ECF6"
+                               Margin="0,6,0,0" />
+                </StackPanel>
+
+                <!-- Sidebar Content -->
+                <StackPanel>
+
+                    <!-- Logo -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="25,34,20,32">
+
+                        <Border Background="#4169E1"
+                                CornerRadius="11"
+                                Width="43"
+                                Height="43">
+
+                            <TextBlock Text="H"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Margin="11,2,0,0">
+                            <TextBlock Text="SBHMS"
+                                       Foreground="White"
+                                       FontSize="22"
+                                       FontWeight="Bold" />
+
+                            <TextBlock Text="HOTEL MANAGEMENT"
+                                       Foreground="#91A6C2"
+                                       FontSize="9"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <TextBlock Text="WORKSPACE"
+                               FontSize="10"
+                               Foreground="#8299B6"
+                               FontWeight="Bold"
+                               Margin="27,0,0,12" />
+
+                    <!-- Customer Profiles -->
+                    <Button x:Name="CustomerNavButton"
+                            Content="♟   Customer profiles"
+                            Style="{StaticResource NavButton}"
+                            Click="Customer_Click" />
+
+                    <!-- Guest Feedback -->
+                    <Button x:Name="FeedbackNavButton"
+                            Content="✉   Guest feedback"
+                            Style="{StaticResource NavButton}"
+                            Click="Feedback_Click" />
+
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- MAIN -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="62" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Header -->
+            <Border Grid.Row="0"
+                    Background="White"
+                    BorderBrush="#E4EAF3"
+                    BorderThickness="0,0,0,1">
+
+                <Grid Margin="27,0">
+
+                    <TextBlock Text="Hotel operations / Guest relations"
+                               VerticalAlignment="Center"
+                               Foreground="#62748B"
+                               FontSize="12" />
+
+                    <Border HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Background="#EFF5FF"
+                            CornerRadius="20"
+                            Padding="12,7">
+
+                        <TextBlock Text="● DEMO"
+                                   Foreground="#4169E1"
+                                   FontWeight="SemiBold"
+                                   FontSize="11" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Dynamic View -->
+
+            <!-- Main content and toast overlay -->
+            <Grid Grid.Row="1">
+
+                <!-- Current view -->
+                <ContentControl x:Name="MainContent" />
+
+                <!-- Toast notification -->
+                <Border x:Name="ToastBorder"
+                        Width="320"
+                        MaxWidth="320"
+                        Padding="16"
+                        CornerRadius="12"
+                        Background="#E8F7EF"
+                        BorderBrush="#D0ECDD"
+                        BorderThickness="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,20,25,0"
+                        Panel.ZIndex="100"
+                        Visibility="Collapsed">
+
+                    <Border.Effect>
+                        <DropShadowEffect Color="#344766"
+                                          BlurRadius="18"
+                                          ShadowDepth="3"
+                                          Opacity="0.15" />
+                    </Border.Effect>
+
+                    <StackPanel>
+                        <TextBlock x:Name="ToastTitle"
+                                   Text="Success"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   Foreground="#15875A"
+                                   Margin="0,0,0,5" />
+
+                        <TextBlock x:Name="ToastMessage"
+                                   Text="Operation completed!"
+                                   TextWrapping="Wrap"
+                                   FontSize="12"
+                                   Foreground="#344766" />
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+
+        </Grid>
     </Grid>
 </Window>
