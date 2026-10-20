@@ -1,7 +1,7 @@
+using SHBMS.ViewModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using SHBMS.ViewModel;
 
 namespace SHBMS.View
 {
@@ -12,6 +12,7 @@ namespace SHBMS.View
         private readonly GuestFeedbackView _feedback = new();
         private readonly GuestStayView _stays = new();
         private readonly RoomStatusView _rooms = new();
+        private readonly StaffAccountView _staffAccounts = new();
 
         public MainWindow()
         {
@@ -45,6 +46,7 @@ namespace SHBMS.View
             FeedbackNavButton.Tag = null;
             StayNavButton.Tag = null;
             RoomNavButton.Tag = null;
+            StaffNavButton.Tag = null;
         }
 
         private void Customer_Click(object sender, RoutedEventArgs e)
@@ -70,6 +72,11 @@ namespace SHBMS.View
         private void Room_Click(object sender, RoutedEventArgs e)
         {
             Navigate(_rooms, RoomNavButton, "RoomStatus", "Hotel operations / Rooms");
+        }
+
+        private void Staff_Click(object sender, RoutedEventArgs e)
+        {
+            Navigate(_staffAccounts, StaffNavButton, "StaffAccounts", "Hotel operations / System administration");
         }
     }
 }
