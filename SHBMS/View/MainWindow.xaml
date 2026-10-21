@@ -184,7 +184,7 @@
 
                     <TextBlock Text="BOOKING &amp; INVENTORY"
                                FontSize="10" Foreground="#8299B6" FontWeight="Bold"
-                               Margin="27,28,0,12" />
+                               Margin="27,14,0,12" />
                     <Button Content="Bookings" Command="{Binding BookingsCommand}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
@@ -219,6 +219,8 @@
                             </Style>
                         </Button.Style>
                     </Button>
+                    <TextBlock Text="MANAGE STAFF" FontSize="10" Foreground="#8299B6" FontWeight="Bold" Margin="27,9,0,12" />
+                    <Button x:Name="StaffNavButton" Content="Staff accounts" Style="{StaticResource NavButton}" Click="Staff_Click" Margin="12,-6,12,4" />
 
                 </StackPanel>
             </DockPanel>

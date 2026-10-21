@@ -1,7 +1,7 @@
+using SHBMS.ViewModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using SHBMS.ViewModel;
 
 namespace SHBMS.View
 {
@@ -17,6 +17,7 @@ namespace SHBMS.View
         private readonly PromotionsPricingView _promotionsPricing = new();
 
 
+        private readonly StaffAccountView _staffAccounts = new();
 
         public MainWindow()
         {
@@ -66,6 +67,7 @@ namespace SHBMS.View
             ServiceRequestNavButton.Tag = null;
             PromotionsPricingNavButton.Tag = null;
 
+            StaffNavButton.Tag = null;
         }
 
         private void Customer_Click(object sender, RoutedEventArgs e)
@@ -137,5 +139,10 @@ namespace SHBMS.View
             );
         }
 
+
+        private void Staff_Click(object sender, RoutedEventArgs e)
+        {
+            Navigate(_staffAccounts, StaffNavButton, "StaffAccounts", "Hotel operations / System administration");
+        }
     }
 }
