@@ -13,6 +13,10 @@ namespace SHBMS.View
         private readonly InvoiceManager _invoiceManager = new();
         private readonly GuestStayView _stays = new();
         private readonly RoomStatusView _rooms = new();
+        private readonly ServiceRequestsView _serviceRequests = new();
+        private readonly PromotionsPricingView _promotionsPricing = new();
+
+
         private readonly StaffAccountView _staffAccounts = new();
 
         public MainWindow()
@@ -60,6 +64,9 @@ namespace SHBMS.View
             InvoiceNavButton.Tag = null;
             StayNavButton.Tag = null;
             RoomNavButton.Tag = null;
+            ServiceRequestNavButton.Tag = null;
+            PromotionsPricingNavButton.Tag = null;
+
             StaffNavButton.Tag = null;
         }
 
@@ -112,6 +119,26 @@ namespace SHBMS.View
                 "RoomStatus",
                 "Hotel operations / Rooms");
         }
+        private void ServiceRequest_Click( object sender,RoutedEventArgs e)
+        {
+            Navigate(
+                _serviceRequests,
+                ServiceRequestNavButton,
+                "ServiceRequests",
+                "Hotel operations / Service Requests");
+        }
+        private void PromotionsPricing_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            Navigate(
+                _promotionsPricing,
+                PromotionsPricingNavButton,
+                "PromotionsPricing",
+                "Booking management / Promotions & Pricing"
+            );
+        }
+
 
         private void Staff_Click(object sender, RoutedEventArgs e)
         {

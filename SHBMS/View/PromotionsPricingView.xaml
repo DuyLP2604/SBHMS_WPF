@@ -1,0 +1,451 @@
+﻿<UserControl x:Class="SHBMS.View.PromotionsPricingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F6FB"
+             FontFamily="Segoe UI">
+
+    
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ModernStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <!-- Cuộn toàn bộ trang -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+
+        <Grid Margin="16,12,16,20"
+              MinWidth="700">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Tiêu đề -->
+            <StackPanel Grid.Row="0"
+                        Margin="0,0,0,16">
+
+                <TextBlock Text="BOOKING MANAGEMENT"
+                           Foreground="#4169E1"
+                           FontSize="10"
+                           FontWeight="Bold"/>
+
+                <TextBlock Text="Promotions &amp; Pricing"
+                           Foreground="#13233C"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Margin="0,3,0,3"/>
+
+                <TextBlock
+                    Text="Manage room pricing rules and promotional discount programs."
+                    Foreground="#718096"
+                    FontSize="12"/>
+            </StackPanel>
+
+            <!-- Hai tab quản lý -->
+            <TabControl Grid.Row="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        SelectedIndex="0">
+
+                <!-- TAB 1: PRICING RULES -->
+                <TabItem Header="Pricing Rules">
+
+                    <StackPanel Margin="0,14,0,0">
+
+                        <!-- Tìm kiếm quy tắc giá -->
+                        <Border Style="{StaticResource Card}"
+                                Padding="16"
+                                Margin="0,0,0,12">
+
+                            <StackPanel>
+                                <TextBlock Text="Search pricing rules"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,12"/>
+
+                                <WrapPanel>
+                                    <TextBox Width="230"
+                                             Height="38"
+                                             Margin="0,0,10,8"
+                                             ToolTip="Search by rule name"/>
+
+                                    <ComboBox Width="155"
+                                              Height="38"
+                                              SelectedIndex="0"
+                                              Margin="0,0,10,8">
+                                        <ComboBoxItem Content="All Status"/>
+                                        <ComboBoxItem Content="Active"/>
+                                        <ComboBoxItem Content="Inactive"/>
+                                    </ComboBox>
+
+                                    <Button Content="Search"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Show All"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,0,8"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Bảng quy tắc giá -->
+                        <Border Style="{StaticResource Card}"
+                                Padding="16"
+                                Margin="0,0,0,12">
+
+                            <StackPanel>
+                                <TextBlock Text="Pricing rules list"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,12"/>
+
+                                <DataGrid Height="240"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          CanUserAddRows="False"
+                                          RowHeight="36"
+                                          ColumnHeaderHeight="38"
+                                          HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Auto">
+
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="ID"
+                                                            Binding="{Binding RuleId}"
+                                                            Width="60"/>
+
+                                        <DataGridTextColumn Header="RULE NAME"
+                                                            Binding="{Binding RuleName}"
+                                                            Width="*"
+                                                            MinWidth="140"/>
+
+                                        <DataGridTextColumn Header="ROOM TYPE"
+                                                            Binding="{Binding RoomType}"
+                                                            Width="130"/>
+
+                                        <DataGridTextColumn Header="ADJUSTMENT"
+                                                            Binding="{Binding Adjustment}"
+                                                            Width="120"/>
+
+                                        <DataGridTextColumn Header="START DATE"
+                                                            Binding="{Binding StartDate}"
+                                                            Width="110"/>
+
+                                        <DataGridTextColumn Header="END DATE"
+                                                            Binding="{Binding EndDate}"
+                                                            Width="110"/>
+
+                                        <DataGridTextColumn Header="STATUS"
+                                                            Binding="{Binding Status}"
+                                                            Width="100"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Nhập quy tắc giá -->
+                        <Border Style="{StaticResource Card}"
+                                Padding="20"
+                                Margin="0,0,0,12">
+
+                            <StackPanel>
+                                <TextBlock Text="Pricing rule details"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,16"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="20"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="RULE NAME"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <TextBox Height="38"
+                                                 Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="ROOM TYPE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <ComboBox Height="38"
+                                                  Margin="0,6,0,16">
+                                            <ComboBoxItem Content="Standard"/>
+                                            <ComboBoxItem Content="Deluxe"/>
+                                            <ComboBoxItem Content="Suite"/>
+                                        </ComboBox>
+
+                                        <TextBlock Text="ADJUSTMENT TYPE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <ComboBox Height="38"
+                                                  Margin="0,6,0,16">
+                                            <ComboBoxItem Content="Increase"/>
+                                            <ComboBoxItem Content="Decrease"/>
+                                        </ComboBox>
+
+                                        <TextBlock Text="ADJUSTMENT (%)"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <TextBox Height="38"
+                                                 Margin="0,6,0,16"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="START DATE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <DatePicker Height="38"
+                                                    Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="END DATE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <DatePicker Height="38"
+                                                    Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="STATUS"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <ComboBox Height="38"
+                                                  SelectedIndex="0"
+                                                  Margin="0,6,0,16">
+                                            <ComboBoxItem Content="Active"/>
+                                            <ComboBoxItem Content="Inactive"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Nút thao tác giao diện -->
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Button Content="Add New"
+                                            Style="{StaticResource PrimaryButton}"
+                                            MinWidth="110"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Update"
+                                            Style="{StaticResource SecondaryButton}"
+                                            MinWidth="110"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Deactivate"
+                                            Style="{StaticResource SecondaryButton}"
+                                            MinWidth="110"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Clear"
+                                            Style="{StaticResource SecondaryButton}"
+                                            MinWidth="90"
+                                            Margin="0,0,0,8"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </TabItem>
+
+                <!-- TAB 2: PROMOTIONS -->
+                <TabItem Header="Promotions">
+
+                    <StackPanel Margin="0,14,0,0">
+
+                        <!-- Tìm kiếm khuyến mãi -->
+                        <Border Style="{StaticResource Card}"
+                                Padding="16"
+                                Margin="0,0,0,12">
+
+                            <StackPanel>
+                                <TextBlock Text="Search promotions"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,12"/>
+
+                                <WrapPanel>
+                                    <TextBox Width="230"
+                                             Height="38"
+                                             ToolTip="Search promotion code"
+                                             Margin="0,0,10,8"/>
+
+                                    <ComboBox Width="155"
+                                              Height="38"
+                                              SelectedIndex="0"
+                                              Margin="0,0,10,8">
+                                        <ComboBoxItem Content="All Status"/>
+                                        <ComboBoxItem Content="Active"/>
+                                        <ComboBoxItem Content="Inactive"/>
+                                    </ComboBox>
+
+                                    <Button Content="Search"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Show All"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,0,8"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Bảng chương trình khuyến mãi -->
+                        <Border Style="{StaticResource Card}"
+                                Padding="16"
+                                Margin="0,0,0,12">
+
+                            <StackPanel>
+                                <TextBlock Text="Promotions list"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,12"/>
+
+                                <DataGrid Height="240"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          CanUserAddRows="False"
+                                          RowHeight="36"
+                                          ColumnHeaderHeight="38"
+                                          HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Auto">
+
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="ID"
+                                                            Binding="{Binding PromotionId}"
+                                                            Width="60"/>
+
+                                        <DataGridTextColumn Header="PROMOTION NAME"
+                                                            Binding="{Binding PromotionName}"
+                                                            Width="*"
+                                                            MinWidth="150"/>
+
+                                        <DataGridTextColumn Header="CODE"
+                                                            Binding="{Binding Code}"
+                                                            Width="110"/>
+
+                                        <DataGridTextColumn Header="DISCOUNT"
+                                                            Binding="{Binding Discount}"
+                                                            Width="110"/>
+
+                                        <DataGridTextColumn Header="START DATE"
+                                                            Binding="{Binding StartDate}"
+                                                            Width="110"/>
+
+                                        <DataGridTextColumn Header="END DATE"
+                                                            Binding="{Binding EndDate}"
+                                                            Width="110"/>
+
+                                        <DataGridTextColumn Header="STATUS"
+                                                            Binding="{Binding Status}"
+                                                            Width="100"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Nhập thông tin khuyến mãi -->
+                        <Border Style="{StaticResource Card}"
+                                Padding="20"
+                                Margin="0,0,0,12">
+
+                            <StackPanel>
+                                <TextBlock Text="Promotion details"
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="0,0,0,16"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="20"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="PROMOTION NAME"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <TextBox Height="38"
+                                                 Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="PROMOTION CODE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <TextBox Height="38"
+                                                 Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="DISCOUNT TYPE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <ComboBox Height="38"
+                                                  Margin="0,6,0,16">
+                                            <ComboBoxItem Content="Percentage"/>
+                                            <ComboBoxItem Content="Fixed Amount"/>
+                                        </ComboBox>
+
+                                        <TextBlock Text="DISCOUNT VALUE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <TextBox Height="38"
+                                                 Margin="0,6,0,16"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="START DATE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <DatePicker Height="38"
+                                                    Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="END DATE"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <DatePicker Height="38"
+                                                    Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="USAGE LIMIT"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <TextBox Height="38"
+                                                 Margin="0,6,0,16"/>
+
+                                        <TextBlock Text="STATUS"
+                                                   Style="{StaticResource FieldLabel}"/>
+
+                                        <ComboBox Height="38"
+                                                  SelectedIndex="0"
+                                                  Margin="0,6,0,16">
+                                            <ComboBoxItem Content="Active"/>
+                                            <ComboBoxItem Content="Inactive"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Nút thao tác giao diện -->
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Button Content="Add New"
+                                            Style="{StaticResource PrimaryButton}"
+                                            MinWidth="110"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Update"
+                                            Style="{StaticResource SecondaryButton}"
+                                            MinWidth="110"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Deactivate"
+                                            Style="{StaticResource SecondaryButton}"
+                                            MinWidth="110"
+                                            Margin="0,0,10,8"/>
+
+                                    <Button Content="Clear"
+                                            Style="{StaticResource SecondaryButton}"
+                                            MinWidth="90"
+                                            Margin="0,0,0,8"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
