@@ -1,8 +1,8 @@
 ﻿using SBHMS.DTO.Guest;
 using SBHMS.DTO.Invoice;
-using SBHMS.Services.Interfaces;
+using SHBMS.Service.Interface;
 
-namespace SBHMS.Services.Implementations
+namespace SHBMS.Service.Implementation
 {
     public class GuestStayService : IGuestStayService
     {

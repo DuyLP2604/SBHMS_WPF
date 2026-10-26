@@ -1,7 +1,7 @@
 ﻿using SBHMS.DTO.Auth;
-using SBHMS.Services.Interfaces;
+using SHBMS.Service.Interface;
 
-namespace SBHMS.Services.Implementations
+namespace SHBMS.Service.Implementation
 {
     public class StaffAccountService : IStaffAccountService
     {

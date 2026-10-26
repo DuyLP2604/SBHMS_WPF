@@ -1,4 +1,4 @@
-﻿namespace SBHMS.Services.Interfaces
+﻿namespace SHBMS.Service.Interface
 {
     public interface IBookingService
     {

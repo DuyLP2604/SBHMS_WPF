@@ -1,45 +1,51 @@
-﻿using System.Windows;
+﻿using SHBMS.Helper;
+using SHBMS.Service.Implementation;
+using SHBMS.Service.Interface;
+using System.Windows;
 
-namespace SHBMS.View
+namespace SHBMS.View;
+
+public partial class LoginView : Window
 {
-    public partial class LoginView : Window
+    private readonly IAuthenticationService _authService;
+
+    public LoginView()
     {
-        public LoginView()
+        InitializeComponent();
+        _authService = new AuthenticationService();
+    }
+
+    private async void BtnLogin_Click(object sender, RoutedEventArgs e)
+    {
+        string username = TxtUsername.Text.Trim();
+        string password = TxtPassword.Password.Trim();
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            InitializeComponent();
+            TxtError.Text = "Please enter Username and Password!";
+            return;
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        // block spam click button
+        var btn = sender as System.Windows.Controls.Button;
+        if (btn != null) btn.IsEnabled = false;
+
+        var account = await _authService.Login(username, password);
+
+        if (account != null)
         {
-            string username = TxtUsername.Text.Trim();
-            string password = TxtPassword.Password.Trim();
+            //Save to session
+            Session.CurrentUser = account;
 
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                TxtError.Text = "Please enter Username and Password!";
-                return;
-            }
-
-
-            if (fakeLogin(username, password))
-            {
-                //close and open main window
-                MainWindow mainWindow = new MainWindow();
-                mainWindow.Show();
-                this.Close();
-            }
-            else
-            {
-                TxtError.Text = "Invalid username or password.";
-            }
+            MainWindow mainWindow = new MainWindow();
+            this.Close();
+            mainWindow.Show();
+        }
+        else
+        {
+            TxtError.Text = "Invalid username or password.";
         }
 
-        // Fake login
-        //TODO: Replace with real authentication logic, Split role of manager and staff
-        private bool fakeLogin(string username, string password)
-        {
-            // Fake login logic for demonstration purposes
-            return (username == "manager" || username == "staff") && password == "123";
-        }
+        if (btn != null) btn.IsEnabled = true;
     }
 }

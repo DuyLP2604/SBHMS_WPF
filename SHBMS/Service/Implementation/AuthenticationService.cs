@@ -1,16 +1,34 @@
-﻿using SBHMS.DTO.Auth;
-using SBHMS.Services.Interfaces;
+﻿using SHBMS.DTO.Auth;
+using SHBMS.Service.Interface;
 
-namespace SBHMS.Services.Implementations
+namespace SHBMS.Service.Implementation
 {
 
     public class AuthenticationService : IAuthenticationService
     {
-        private readonly PRN212_SBHMSContext _context;
-        public AuthenticationService(PRN212_SBHMSContext context) { _context = context; }
+        public async Task<AccountDTO?> Login(string username, string password)
+        {
+            await Task.Delay(300);
 
-        public Task<AccountDto> LoginAsync(string username, string password) => throw new NotImplementedException();
-        public Task LogoutAsync(int userId) => throw new NotImplementedException();
-        public Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword) => throw new NotImplementedException();
+            // TODO: DB
+            // Get username from database and check password
+            // Get user ID for check role
+            // Get role from database
+            // Switch case for role to return AccountDTO
+            if ((username == "manager" || username == "staff" || username == "admin") && password == "123")
+            {
+                return new AccountDTO
+                {
+                    UserId = 1,
+                    Username = username,
+                    FullName = "Tài khoản " + username,
+                    Role = username == "manager" ? "Manager" : (username == "admin" ? "Admin" : "Staff")
+                };
+            }
+            return null;
+        }
+
+        public Task Logout(int userId) => throw new NotImplementedException();
+        public Task<bool> ChangePassword(int userId, string oldPassword, string newPassword) => throw new NotImplementedException();
     }
 }

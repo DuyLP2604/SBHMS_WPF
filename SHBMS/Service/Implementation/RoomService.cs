@@ -1,7 +1,7 @@
 ﻿using SBHMS.DTO.Room;
-using SBHMS.Services.Interfaces;
+using SHBMS.Service.Interface;
 
-namespace SBHMS.Services.Implementations
+namespace SHBMS.Service.Implementation
 {
     public class RoomService : IRoomService
     {

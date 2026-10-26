@@ -33,7 +33,7 @@
                     <TextBlock Grid.Column="1" Text="* Required fields" Foreground="#8793A6" FontSize="11" VerticalAlignment="Center" />
                 </Grid>
 
-                <!-- DÒNG 1: USERNAME | FULL NAME | ROLE -->
+                <!-- USERNAME | FULL NAME | ROLE -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.5*" />
@@ -61,7 +61,7 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- DÒNG 2: EMAIL | PHONE | PASSWORD -->
+                <!-- EMAIL | PHONE | PASSWORD -->
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2.2*" />
