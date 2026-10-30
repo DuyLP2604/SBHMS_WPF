@@ -131,8 +131,7 @@
                           GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="#EDF1F7"
                           HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          SelectionChanged="StaffGrid_SelectionChanged">
+                          VerticalAlignment="Stretch">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="USERNAME" Binding="{Binding Username}" Width="130" MinWidth="110" />
                         <DataGridTextColumn Header="FULL NAME" Binding="{Binding FullName}" Width="180" MinWidth="150" />
