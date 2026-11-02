@@ -1,28 +1,37 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace SHBMS.Helper;
-
-public interface IRefreshCommand
+namespace SHBMS.Helper
 {
-    void Refresh();
-}
-
-public sealed class RelayCommand : ICommand, IRefreshCommand
-{
-    private readonly Action _execute;
-    private readonly Func<bool>? _canExecute;
-
-    public RelayCommand(Action execute, Func<bool>? canExecute = null)
+    public class RelayCommand : ICommand
     {
-        _execute = execute;
-        _canExecute = canExecute;
-    }
+        private readonly Action<object> execute;
+        private readonly Func<object, bool> canExecute;
 
-    public event EventHandler? CanExecuteChanged;
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
-    public void Execute(object? parameter)
-    {
-        if (CanExecute(parameter)) _execute();
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
+        {
+            this.execute = execute;
+            this.canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return canExecute == null || canExecute(parameter);
+        }
+
+        public void Execute(object parameter)
+        {
+            execute(parameter);
+        }
     }
-    public void Refresh() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }

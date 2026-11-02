@@ -1,37 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using SHBMS.Helper;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace SHBMS.ViewModel;
-
-public abstract class BaseViewModel : INotifyPropertyChanged
+namespace SHBMS.ViewModel
 {
-    private readonly List<IRefreshCommand> _commands = new();
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? name = null)
+    public class BaseViewModel : INotifyPropertyChanged
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(name);
-        return true;
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
-    protected void OnPropertyChanged([CallerMemberName] string? name = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        RefreshCommands();
-    }
-
-    protected RelayCommand Command(Action execute, Func<bool>? canExecute = null)
-    {
-        var command = new RelayCommand(execute, canExecute);
-        _commands.Add(command);
-        return command;
-    }
-
-    public void RefreshCommands()
-    {
-        foreach (var command in _commands) command.Refresh();
-    }
 }

@@ -7,7 +7,6 @@ namespace SHBMS.View
 {
     public partial class MainWindow : Window
     {
-        private readonly MainViewModel _viewModel = new();
         private readonly CustomerProfilesView _customers = new();
         private readonly GuestFeedbackView _feedback = new();
         private readonly InvoiceManager _invoiceManager = new();
@@ -22,37 +21,14 @@ namespace SHBMS.View
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = _viewModel;
-            _viewModel.PropertyChanged += ModuleNavigationChanged;
             ShowCustomerPage();
-        }
-
-        private void ModuleNavigationChanged(
-            object? sender,
-            PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName != nameof(MainViewModel.CurrentPageKey)
-                || !_viewModel.IsOperationsPage)
-                return;
-
-            ResetNavigation();
-            BreadcrumbText.SetCurrentValue(
-                TextBlock.TextProperty,
-                _viewModel.PageTitle);
-        }
-
+        } 
         private void Navigate(
             object page,
             Button navButton,
             string pageKey,
             string breadcrumb)
         {
-            _viewModel.ShowLegacyPage(pageKey);
-            MainContent.Content = page;
-            BreadcrumbText.SetCurrentValue(
-                TextBlock.TextProperty,
-                breadcrumb);
-
             ResetNavigation();
             navButton.Tag = "Selected";
         }
