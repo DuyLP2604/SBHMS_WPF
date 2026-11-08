@@ -95,7 +95,7 @@ public partial class Prn212SbhmsContext : DbContext
             entity.Property(e => e.CancellationReason).HasMaxLength(200);
             entity.Property(e => e.CheckInDeadline)
                 .HasPrecision(0)
-                .HasComputedColumnSql("(isnull([CheckInDeadlineOverride],dateadd(minute,(855),CONVERT([datetime2](0),[CheckInDate]))))", true);
+                .HasComputedColumnSql("(dateadd(second,(-1),dateadd(day,(1),CONVERT([datetime2](0),[CheckInDate]))))", true);
             entity.Property(e => e.CheckInDeadlineOverride).HasPrecision(0);
             entity.Property(e => e.CustomerId)
                 .HasMaxLength(6)

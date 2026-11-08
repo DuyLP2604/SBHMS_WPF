@@ -34,7 +34,7 @@ namespace SHBMS.Service.Implementation
                 .Select(b => new
                 {
                     b.BookingId, b.CustomerId, CustomerName = b.Customer.FullName, CustomerPhone = b.Customer.Phone,
-                    b.CheckInDate, b.CheckOutDate, b.BookingStatus, b.CheckInDeadline, b.CheckInDeadlineOverride
+                    b.CheckInDate, b.CheckOutDate, b.BookingStatus
                 }).ToListAsync();
             var ids = bookings.Select(b => b.BookingId).ToList();
             var details = await _context.BookingDetails.AsNoTracking().Where(d => ids.Contains(d.BookingId))
@@ -49,12 +49,12 @@ namespace SHBMS.Service.Implementation
 
             return bookings.Select(b =>
             {
-                var deadline = b.CheckInDeadline ?? b.CheckInDeadlineOverride ?? b.CheckInDate.ToDateTime(new TimeOnly(14, 15));
+                var deadline = b.CheckInDate.ToDateTime(TimeOnly.MaxValue);
                 string phase = b.BookingStatus switch
                 {
                     "CHECKED_IN" => b.CheckOutDate < today ? "Overdue checkout"
                         : b.CheckOutDate == today ? "Due out today" : "In house",
-                    "PENDING" or "CONFIRMED" => now > deadline ? "Overdue check-in"
+                    "PENDING" or "CONFIRMED" => today > b.CheckInDate ? "Overdue check-in"
                         : b.CheckInDate > today ? "Upcoming" : "Arriving today",
                     "CHECKED_OUT" => "Checked out",
                     "CANCELLED" => "Cancelled",

@@ -98,7 +98,7 @@
                                 </TextBlock>
                                 <TextBlock Text="STATUS" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" />
                                 <TextBlock Text="{Binding SelectedStay.Phase}" Foreground="#13233C" FontSize="14" />
-                                <TextBlock Text="{Binding SelectedStay.CheckInDeadline, StringFormat=Check-in deadline: {0:dd/MM/yyyy HH:mm}}" Foreground="#718096" FontSize="12" />
+                                <TextBlock Text="{Binding SelectedStay.CheckInDate, StringFormat=Check in on {0:dd/MM/yyyy} (any time)}" Foreground="#718096" FontSize="12" />
                                 <TextBlock Text="Rooms" Style="{StaticResource SectionTitle}" Margin="0,16,0,8" />
                                 <ItemsControl ItemsSource="{Binding SelectedStay.Rooms}">
                                     <ItemsControl.ItemTemplate>

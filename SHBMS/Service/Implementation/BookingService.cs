@@ -157,9 +157,7 @@ public class BookingService : IBookingService
         var booking = new Booking {
             BookingId = EntityIds.Next(await db.Bookings.Select(b => b.BookingId).ToListAsync(), "BK", 4),
             Customer = customer, EmployeeId = account.EmployeeId, BookingDate = now,
-            CheckInDate = dto.CheckInDate, CheckOutDate = dto.CheckOutDate, BookingStatus = "CONFIRMED",
-            CheckInDeadlineOverride = dto.CheckInDate == today && now.TimeOfDay >= new TimeSpan(14, 15, 0)
-                ? dto.CheckInDate.ToDateTime(new TimeOnly(23, 59, 59)) : null
+            CheckInDate = dto.CheckInDate, CheckOutDate = dto.CheckOutDate, BookingStatus = "CONFIRMED"
         };
         foreach (var requested in dto.Rooms)
         {
@@ -203,7 +201,7 @@ public class BookingService : IBookingService
             BookingId = b.BookingId, CustomerId = b.CustomerId, CustomerName = b.Customer.FullName,
             CustomerPhone = b.Customer.Phone, EmployeeId = b.EmployeeId, CreatedByEmployeeName = b.Employee.FullName,
             BookingDate = b.BookingDate, CheckInDate = b.CheckInDate, CheckOutDate = b.CheckOutDate,
-            CheckInDeadline = b.CheckInDeadline ?? b.CheckInDeadlineOverride ?? b.CheckInDate.ToDateTime(new TimeOnly(14, 15)),
+            CheckInDeadline = b.CheckInDate.ToDateTime(TimeOnly.MaxValue),
             Status = b.BookingStatus, CancellationReason = b.CancellationReason,
             Rooms = b.BookingDetails.Select(d => new BookingRoomLineDto { RoomTypeId = d.RoomTypeId,
                 TypeName = d.RoomType.TypeName, Quantity = d.Quantity, UnitPrice = d.UnitPrice, NumberOfNights = nights,

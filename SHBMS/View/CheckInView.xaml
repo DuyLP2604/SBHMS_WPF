@@ -27,7 +27,7 @@
         </Grid.RowDefinitions>
         <StackPanel Margin="0,0,0,12">
             <TextBlock Text="Check-in" FontSize="25" FontWeight="Bold" Foreground="{StaticResource Navy}"/>
-            <TextBlock Text="Confirmed bookings. Overdue bookings are shown in red and can be cancelled."
+            <TextBlock Text="Check in on the arrival date at any time. Collect the full room charge before check-in."
                        Foreground="{StaticResource Muted}" Margin="0,4,0,10" TextWrapping="Wrap"/>
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}"
@@ -43,7 +43,7 @@
                       CanUserDeleteRows="False">
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
-                        <Setter Property="ToolTip" Value="{Binding CheckInDeadline, StringFormat='Check-in deadline: {0:dd/MM/yyyy HH:mm}'}"/>
+                        <Setter Property="ToolTip" Value="{Binding CheckInDate, StringFormat='Check-in date: {0:dd/MM/yyyy} (any time)'}"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsCheckInOverdue}" Value="True">
                                 <Setter Property="Background" Value="#FFF1F2"/>
@@ -110,10 +110,26 @@
             </Border>
             <Border Style="{StaticResource Card}" Padding="16"
                     Visibility="{Binding IsAssigning, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel>
-                    <TextBlock Text="Assign rooms" Style="{StaticResource SectionTitle}"/>
-                    <TextBlock Text="{Binding SelectedBooking.BookingId}" Foreground="{StaticResource Accent}" Margin="0,4,0,8"/>
-                    <ScrollViewer MaxHeight="210" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Assign rooms and collect payment" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="{Binding SelectedBooking.BookingId}" Foreground="{StaticResource Accent}" Margin="0,4,0,8"/>
+                        <UniformGrid Columns="3" Margin="0,0,0,10">
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="ROOM CHARGE (VND)" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding SelectedBooking.RoomSubtotal, StringFormat=N0}"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="ALREADY PAID (VND)" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding SelectedBooking.PaidAmount, StringFormat=N0}"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="ROOM AMOUNT DUE (VND)" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding AmountDue, StringFormat=N0}" Foreground="{StaticResource Accent}" FontWeight="Bold" FontSize="18"/>
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBlock Text="Pay the remaining room charge in cash. Service charges are settled at checkout."
+                                   TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
                         <ItemsControl ItemsSource="{Binding RoomAssignments}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -132,12 +148,18 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-                        <Button Content="Cancel" Command="{Binding CancelAssignCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
-                        <Button Content="Check in" Command="{Binding CheckInCommand}" Style="{StaticResource PrimaryButton}"/>
+                        <CheckBox IsChecked="{Binding CashReceived, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Visibility="{Binding HasAmountDue, Converter={StaticResource BoolToVisibility}}"
+                                  Margin="0,6,0,4">
+                            <TextBlock Text="I have received the full remaining room payment in cash. Check-in will record this payment."
+                                       TextWrapping="Wrap"/>
+                        </CheckBox>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                            <Button Content="Cancel" Command="{Binding CancelAssignCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                            <Button Content="Check in" Command="{Binding CheckInCommand}" Style="{StaticResource PrimaryButton}"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+                </ScrollViewer>
             </Border>
         </StackPanel>
     </Grid>
