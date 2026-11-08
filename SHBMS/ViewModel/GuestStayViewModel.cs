@@ -1,47 +1,84 @@
-using Microsoft.EntityFrameworkCore;
+using SHBMS.DTO.Guest;
 using SHBMS.Helper;
-using SHBMS.Model;
+using SHBMS.Service.Implementation;
+using SHBMS.Service.Interface;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 namespace SHBMS.ViewModel;
+
+// FE-02 Manage Guest Stay. Stays, rooms and charges are read from SQL Server via IGuestStayService.
+// Check-in and check-out live in their own screens (CheckInView / CheckOutView).
 public class GuestStayViewModel : DatabaseViewModel
 {
-    public ObservableCollection<Booking> Bookings { get; } = new();
-    public ICollectionView BookingsView { get; }
+    private readonly IGuestStayService _service;
+    public ObservableCollection<GuestStayDto> Stays { get; } = new();
+    public ICollectionView StaysView { get; }
+    public string[] FilterOptions { get; } =
+        { "Current", "Arriving today", "In house", "Due out today", "Upcoming", "Checked out", "All" };
+
     private string _searchText = "";
-    public string SearchText { get => _searchText; set => SetProperty(ref _searchText, value); }
-    private Booking? _selectedBooking;
-    public Booking? SelectedBooking
+    public string SearchText { get => _searchText; set { SetProperty(ref _searchText, value); RefreshList(); } }
+    private string _filterOption = "Current";
+    public string FilterOption { get => _filterOption; set { SetProperty(ref _filterOption, value); RefreshList(); } }
+
+    private GuestStayDto? _selectedStay;
+    public GuestStayDto? SelectedStay
     {
-        get => _selectedBooking;
-        set { SetProperty(ref _selectedBooking, value); OnPropertyChanged(nameof(RoomText)); OnPropertyChanged(nameof(TotalCharge)); }
+        get => _selectedStay;
+        set { SetProperty(ref _selectedStay, value); OnPropertyChanged(nameof(HasSelection)); }
     }
-    public string Summary => $"In house: {Bookings.Count(b => b.BookingStatus == "CHECKED_IN")} | Arriving today: {Bookings.Count(b => b.CheckInDate == DateOnly.FromDateTime(DateTime.Today) && (b.BookingStatus == "PENDING" || b.BookingStatus == "CONFIRMED"))}";
-    public string RoomText => SelectedBooking == null ? "" : string.Join(", ", SelectedBooking.BookingDetails
-        .SelectMany(d => d.RoomAssignments).Select(a => a.Room.RoomNumber));
-    public decimal TotalCharge => SelectedBooking == null ? 0 :
-        SelectedBooking.BookingDetails.Sum(d => d.Quantity * d.UnitPrice)
-        * (SelectedBooking.CheckOutDate.DayNumber - SelectedBooking.CheckInDate.DayNumber)
-        + SelectedBooking.BookingServices.Sum(s => s.Quantity * s.UnitPrice);
+    public bool HasSelection => SelectedStay != null;
+
+    public string Summary
+    {
+        get
+        {
+            int inHouse = Stays.Count(s => s.Status == "CHECKED_IN");
+            int arriving = Stays.Count(s => s.Phase == "Arriving today");
+            int dueOut = Stays.Count(s => s.Phase is "Due out today" or "Overdue checkout");
+            return $"In house: {inHouse} | Arriving today: {arriving} | Due out: {dueOut} | Showing {StaysView.Cast<object>().Count()} of {Stays.Count}";
+        }
+    }
+
     public RelayCommand SearchCommand { get; }
-    public GuestStayViewModel()
+
+    public GuestStayViewModel(IGuestStayService? service = null)
     {
-        BookingsView = CollectionViewSource.GetDefaultView(Bookings);
-        BookingsView.Filter = item => item is Booking b && (string.IsNullOrWhiteSpace(SearchText)
-            || Contains(b.BookingId, SearchText.Trim()) || Contains(b.Customer.FullName, SearchText.Trim())
-            || Contains(b.BookingStatus, SearchText.Trim()));
-        SearchCommand = new RelayCommand(_ => BookingsView.Refresh(), _ => !IsBusy);
+        _service = service ?? new GuestStayService();
+        StaysView = CollectionViewSource.GetDefaultView(Stays);
+        StaysView.Filter = item => item is GuestStayDto s && MatchesFilter(s) && (string.IsNullOrWhiteSpace(SearchText)
+            || Contains(s.BookingId, SearchText.Trim()) || Contains(s.CustomerName, SearchText.Trim())
+            || Contains(s.CustomerPhone, SearchText.Trim()) || Contains(s.RoomNumbers, SearchText.Trim())
+            || Contains(s.Phase, SearchText.Trim()));
+        SearchCommand = new RelayCommand(_ => RefreshList(), _ => !IsBusy);
     }
+
+    private void RefreshList() { StaysView.Refresh(); OnPropertyChanged(nameof(Summary)); }
+
+    private bool MatchesFilter(GuestStayDto s) => FilterOption switch
+    {
+        "Current" => s.Phase is "Arriving today" or "Overdue check-in" or "In house" or "Due out today" or "Overdue checkout",
+        "Arriving today" => s.Phase == "Arriving today",
+        "In house" => s.Status == "CHECKED_IN",
+        "Due out today" => s.Phase is "Due out today" or "Overdue checkout",
+        "Upcoming" => s.Phase == "Upcoming",
+        "Checked out" => s.Phase == "Checked out",
+        _ => true
+    };
+
     protected override async Task LoadDataAsync()
     {
-        using var db = new Prn212SbhmsContext();
-        var data = await db.Bookings.AsNoTracking().Where(b => !b.IsDeleted).Include(b => b.Customer)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.RoomAssignments).ThenInclude(a => a.Room)
-            .Include(b => b.BookingServices).OrderByDescending(b => b.CheckInDate).ToListAsync();
-        Bookings.Clear(); foreach (var b in data) Bookings.Add(b);
-        SelectedBooking = null; OnPropertyChanged(nameof(Summary));
-        // The former GuestStay/HotelDemoStore workflow is not a database entity.
-        // This migration provides a real booking overview without inventing stay records.
+        if (!Session.CanViewBookings)
+        {
+            Stays.Clear(); SelectedStay = null;
+            throw new UnauthorizedAccessException("Only Staff and Manager can view guest stays.");
+        }
+        var data = await _service.GetStaysAsync();
+        string? keep = SelectedStay?.BookingId;
+        Stays.Clear();
+        foreach (var stay in data) Stays.Add(stay);
+        SelectedStay = keep == null ? null : Stays.FirstOrDefault(s => s.BookingId == keep);
+        OnPropertyChanged(nameof(Summary));
     }
 }
