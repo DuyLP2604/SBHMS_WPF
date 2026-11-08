@@ -61,7 +61,7 @@
                             </StackPanel>
                         </StackPanel>
                         <TextBlock Text="WORKSPACE" FontSize="10" Foreground="#8299B6" FontWeight="Bold" Margin="27,0,0,12"/>
-                        <Button x:Name="CustomerNavButton" Style="{StaticResource NavButton}" Click="Customer_Click">
+                        <Button x:Name="CustomerNavButton" Style="{StaticResource NavButton}" Click="Customer_Click" Visibility="{Binding CanManageCustomerProfiles, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="♟" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Customer profiles" VerticalAlignment="Center"/>
@@ -74,20 +74,20 @@
                             </StackPanel>
                         </Button>
                         <Button x:Name="CheckInNavButton" Style="{StaticResource NavButton}" Click="CheckIn_Click"
-                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                                Visibility="{Binding CanManageGuestStays, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Check-in" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="CheckOutNavButton" Style="{StaticResource NavButton}" Click="CheckOut_Click"
-                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                                Visibility="{Binding CanManageGuestStays, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Check-out" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="StayNavButton" Style="{StaticResource NavButton}" Click="Stay_Click">
+                        <Button x:Name="StayNavButton" Style="{StaticResource NavButton}" Click="Stay_Click" Visibility="{Binding CanManageGuestStays, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="🛎️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Guest stays" VerticalAlignment="Center"/>
@@ -120,13 +120,13 @@
                             </StackPanel>
                         </Button>
                         <Button x:Name="BookingServicesNavButton" Style="{StaticResource NavButton}" Click="BookingServices_Click"
-                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                                Visibility="{Binding CanManageBookingServices, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="☕" Width="18" Margin="0,0,10,0"/>
                                 <TextBlock Text="Booking services"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="FeedbackNavButton" Style="{StaticResource NavButton}" Click="Feedback_Click">
+                        <Button x:Name="FeedbackNavButton" Style="{StaticResource NavButton}" Click="Feedback_Click" Visibility="{Binding CanViewGuestFeedback, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="✉" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Guest feedback" VerticalAlignment="Center"/>
