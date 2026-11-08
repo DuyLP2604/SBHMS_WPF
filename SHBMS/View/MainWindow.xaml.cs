@@ -32,8 +32,9 @@ public partial class MainWindow : Window
     {
         if ((key == "Rooms" || key == "RoomTypes" || key == "RoomStatus") && !_vm.CanViewRooms) return;
         if ((key == "Bookings" || key == "CheckIn" || key == "CheckOut") && !_vm.CanViewBookings) return;
+        if (key == "Revenue" && !_vm.CanManagePricing) return;
         foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton, StayNavButton, RoomStatusNavButton, RoomNavButton, ServiceRequestNavButton,
-            FeedbackNavButton, InvoiceNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
+            FeedbackNavButton, InvoiceNavButton, RevenueNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
         button.Tag = "Selected";
         if (!_pages.TryGetValue(key, out var page)) { page = create(); _pages.Add(key, page); }
         PageHost.Content = page; _vm.PageTitle = title;
@@ -41,6 +42,7 @@ public partial class MainWindow : Window
     private void Customer_Click(object sender, RoutedEventArgs e) => Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
     private void Feedback_Click(object sender, RoutedEventArgs e) => Navigate("Feedback", "Guest feedback", FeedbackNavButton, () => new GuestFeedbackView());
     private void Invoice_Click(object sender, RoutedEventArgs e) => Navigate("Invoices", "Invoices", InvoiceNavButton, () => new InvoiceManager());
+    private void Revenue_Click(object sender, RoutedEventArgs e) => Navigate("Revenue", "Revenue & pricing", RevenueNavButton, () => new RevenueManagementPage());
     private void Bookings_Click(object sender, RoutedEventArgs e) => ShowBookings();
     private void ShowBookings(string? createdId = null)
     {
