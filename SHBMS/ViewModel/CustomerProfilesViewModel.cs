@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SHBMS.Helper;
 using SHBMS.Model;
 using System.Collections.ObjectModel;
@@ -13,6 +13,7 @@ namespace SHBMS.ViewModel;
 public class CustomerProfilesViewModel : DatabaseViewModel
 {
     public ObservableCollection<Customer> Customers { get; } = new();
+    public ObservableCollection<Nationality> Nationalities { get; } = new();
     public ICollectionView CustomersView { get; }
 
     private string _searchText = "";
@@ -22,7 +23,8 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         set => SetProperty(ref _searchText, value);
     }
 
-    // The grid row and the form must never share the same Customer instance.
+    // SelectedItem: row selected in the grid.
+    // TextBoxItem: a separate Customer copy used by the input form.
     private Customer? _selectedItem;
     public Customer? SelectedItem
     {
@@ -33,14 +35,12 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
             if (value != null)
             {
-                _editingCustomerId = value.CustomerId;
                 TextBoxItem = CloneCustomer(value);
                 StatusMessage = "";
-                OnPropertyChanged(nameof(IsNew));
             }
 
-            // A filter can clear the grid selection. Keep the current draft
-            // and its update target until New, Copy, Refresh or Save is used.
+            // Clearing the grid selection does not change the form.
+            // New explicitly clears the form below.
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -49,11 +49,16 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     public Customer TextBoxItem
     {
         get => _textBoxItem;
-        private set => SetProperty(ref _textBoxItem, value);
+        private set
+        {
+            SetProperty(ref _textBoxItem, value);
+            OnPropertyChanged(nameof(IsNew));
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
-    private string? _editingCustomerId;
-    public bool IsNew => _editingCustomerId == null;
+    // New customers have no ID until Save generates one.
+    public bool IsNew => string.IsNullOrEmpty(TextBoxItem.CustomerId);
 
     public RelayCommand NewCommand { get; }
     public RelayCommand CopyCommand { get; }
@@ -75,7 +80,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
         NewCommand = new RelayCommand(_ => PrepareNewForm(), _ => !IsBusy);
         CopyCommand = new RelayCommand(_ => CopyToNew(),
-            _ => !IsBusy && _editingCustomerId != null);
+            _ => !IsBusy && !IsNew);
         SaveCommand = DatabaseCommand(SaveAsync);
         DeleteCommand = DatabaseCommand(DeleteAsync, () => SelectedItem != null);
         SearchCommand = new RelayCommand(_ => CustomersView.Refresh(), _ => !IsBusy);
@@ -88,13 +93,13 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
     private static Customer EmptyCustomer() => new()
     {
-        CustomerId = "(auto)",
+        CustomerId = "",
         FullName = "",
         IdentityNumber = "",
         Phone = "",
         Email = "",
         Address = "",
-        NationalityName = ""
+        NationalityId = null
     };
 
     // Copy only scalar fields; do not copy EF navigation collections.
@@ -106,7 +111,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         Phone = source.Phone ?? "",
         Email = source.Email ?? "",
         Address = source.Address ?? "",
-        NationalityName = source.NationalityName ?? ""
+        NationalityId = source.NationalityId
     };
 
     private void PrepareNewForm()
@@ -124,7 +129,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         // Preserve edits already entered on the form, without saving them.
         var copy = CloneCustomer(TextBoxItem);
         PrepareNewForm();
-        copy.CustomerId = "(auto)";
+        copy.CustomerId = "";
         copy.IdentityNumber = "";
         TextBoxItem = copy;
         Notify("Customer details copied. Enter a new identity number if needed, then save.", "info");
@@ -133,8 +138,19 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     protected override async Task LoadDataAsync()
     {
         using var db = new Prn212SbhmsContext();
+        var nations = await db.Nationalities.AsNoTracking()
+            .OrderBy(n => n.NationalityName).ToListAsync();
         var data = await db.Customers.AsNoTracking()
+            .Include(c => c.Nationality)
             .OrderBy(c => c.CustomerId).ToListAsync();
+
+        Nationalities.Clear();
+        Nationalities.Add(new Nationality
+        {
+            NationalityId = "",
+            NationalityName = ""
+        }); // Empty option: nationality is optional.
+        foreach (var nation in nations) Nationalities.Add(nation);
 
         Customers.Clear();
         foreach (var customer in data) Customers.Add(customer);
@@ -143,9 +159,9 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
     private async Task SaveAsync()
     {
-        // Snapshot the draft and target before awaiting database operations.
-        var form = CloneCustomer(TextBoxItem);
-        string? id = _editingCustomerId;
+        var form = TextBoxItem;
+        bool isNew = string.IsNullOrEmpty(form.CustomerId);
+        string? id = isNew ? null : form.CustomerId;
 
         if (string.IsNullOrWhiteSpace(form.FullName) ||
             string.IsNullOrWhiteSpace(form.Phone))
@@ -155,8 +171,9 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         }
 
         if (form.FullName.Trim().Length > 100 || form.Phone.Trim().Length > 15
-            || form.IdentityNumber!.Trim().Length > 20 || form.Email!.Trim().Length > 100
-            || form.Address!.Trim().Length > 200 || form.NationalityName!.Trim().Length > 50)
+            || (form.IdentityNumber?.Trim().Length ?? 0) > 20
+            || (form.Email?.Trim().Length ?? 0) > 100
+            || (form.Address?.Trim().Length ?? 0) > 200)
         {
             Notify("A field exceeds its allowed length.", "warning");
             return;
@@ -179,15 +196,31 @@ public class CustomerProfilesViewModel : DatabaseViewModel
             return;
         }
 
-        var entity = id == null ? new Customer
+        Customer entity;
+        if (isNew)
         {
-            CustomerId = EntityIds.Next(
-                await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3)
-        } : await db.Customers.FindAsync(id);
+            entity = new Customer
+            {
+                CustomerId = EntityIds.Next(
+                    await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3)
+            };
+        }
+        else
+        {
+            var existingCustomer = await db.Customers.FindAsync(id);
+            if (existingCustomer == null)
+            {
+                Notify("Customer no longer exists. Refresh the list.", "warning");
+                return;
+            }
+            entity = existingCustomer;
+        }
 
-        if (entity == null)
+        string? nationalityId = EntityIds.Optional(form.NationalityId);
+        if (nationalityId != null && !await db.Nationalities
+            .AnyAsync(n => n.NationalityId == nationalityId))
         {
-            Notify("Customer no longer exists. Refresh the list.", "warning");
+            Notify("Select a nationality from the list.", "warning");
             return;
         }
 
@@ -196,12 +229,12 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         entity.IdentityNumber = identity;
         entity.Email = EntityIds.Optional(form.Email);
         entity.Address = EntityIds.Optional(form.Address);
-        entity.NationalityName = EntityIds.Optional(form.NationalityName);
+        entity.NationalityId = nationalityId;
 
-        if (id == null) db.Customers.Add(entity);
+        if (isNew) db.Customers.Add(entity);
         await db.SaveChangesAsync();
         await LoadDataAsync();
-        Notify(id == null ? "Customer added successfully." : "Customer updated successfully.", "success");
+        Notify(isNew ? "Customer added successfully." : "Customer updated successfully.", "success");
     }
 
     private async Task DeleteAsync()

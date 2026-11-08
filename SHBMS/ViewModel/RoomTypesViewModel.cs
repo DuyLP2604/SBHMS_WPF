@@ -16,7 +16,7 @@ public class RoomTypesViewModel : DatabaseViewModel
     public bool CanView => Session.CanViewRooms;
     public bool CanManage => Session.IsManager;
     public bool IsReadOnly => !CanManage;
-    public string AccessHint => CanManage ? "Manager access: manage room types and nightly prices." : "View access: search, filter and select a room type to see its details.";
+    public string AccessHint => CanManage ? "Manager access: update the four room types RT01 to RT04 and their nightly prices." : "View access: search, filter and select a room type to see its details.";
     public string FormTitle => CanManage && SelectedRoomType == null ? "New room type" : "Room type details";
     public string Summary => $"{RoomTypesView.Cast<object>().Count()} of {RoomTypes.Count} room types";
     private string _roomTypeId = "";
@@ -77,7 +77,7 @@ public class RoomTypesViewModel : DatabaseViewModel
                 || Contains(r.Name, SearchText.Trim()) || Contains(r.Description, SearchText.Trim()));
         RoomTypesView.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
         NewCommand = new RelayCommand(_ => SelectedRoomType = null, _ => CanManage && !IsBusy);
-        AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoomType == null);
+        AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoomType == null && RoomTypes.Count < 4);
         UpdateCommand = DatabaseCommand(UpdateAsync, () => CanManage && SelectedRoomType != null);
         DeleteCommand = DatabaseCommand(DeleteAsync, () => CanManage && SelectedRoomType != null);
         SearchCommand = new RelayCommand(_ => ApplyFilters(), _ => !IsBusy);
