@@ -7,7 +7,8 @@ public class MainWindowViewModel : BaseViewModel
     public bool IsAdmin => Session.IsAdmin;
     public bool CanViewRooms => Session.CanViewRooms;
     public bool CanViewBookings => Session.CanViewBookings;
-    public bool CanManagePricing => Session.IsManager || Session.IsAdmin;
+    public bool CanViewInvoices => Session.CanViewInvoices;
+    public bool CanManagePricing => Session.IsManager;
     private string _pageTitle = "Customer profiles";
     public string PageTitle { get => _pageTitle; set => SetProperty(ref _pageTitle, value); }
 }
