@@ -12,6 +12,7 @@ public class BookingDto
     public DateOnly CheckOutDate { get; set; }
     public DateTime? CheckInDeadline { get; set; }
     public string Status { get; set; } = "";
+    public int OpenServiceRequestCount { get; set; }
     public string? CancellationReason { get; set; }
     // Check-in is allowed for the entire arrival date, regardless of the time.
     public bool IsCheckInOverdue => Status == "CONFIRMED"

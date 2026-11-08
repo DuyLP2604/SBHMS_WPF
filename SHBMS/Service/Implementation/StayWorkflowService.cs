@@ -175,6 +175,7 @@ public class StayWorkflowService
         if (booking.Invoices.Count > 0)
             throw new InvalidOperationException("This booking already has an invoice. Review it before checkout.");
 
+        // BOOKING_SERVICE includes legacy charges and newly resolved requests exactly once.
         // Keep the booked number of nights and booked unit prices, even for early checkout.
         int nights = booking.CheckOutDate.DayNumber - booking.CheckInDate.DayNumber;
         decimal total = booking.BookingDetails.Sum(d => d.Quantity * d.UnitPrice * nights)
@@ -186,7 +187,16 @@ public class StayWorkflowService
         if (remaining > 0 && !cashReceived)
             throw new ArgumentException("Confirm that the remaining cash payment has been received.");
 
+        var openRequests = await db.ServiceRequests.Where(r => r.BookingId == bookingId
+            && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress")).ToListAsync();
         DateTime now = _clock();
+        foreach (var request in openRequests)
+        {
+            request.RequestStatus = "Rejected";
+            request.HandledByEmployeeId = Session.CurrentAccount!.EmployeeId;
+            request.ResolvedAt = now;
+        }
+        // Open requests were never charged or deducted from stock. Completed charges remain unchanged.
         if (remaining > 0)
         {
             if (!await db.Paymentmethods.AnyAsync(m => m.MethodId == "PT03"))

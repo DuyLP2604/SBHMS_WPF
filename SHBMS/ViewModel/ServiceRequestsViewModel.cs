@@ -1,91 +1,83 @@
-using Microsoft.EntityFrameworkCore;
+using SHBMS.DTO.Service;
 using SHBMS.Helper;
-using SHBMS.Model;
+using SHBMS.Service.Implementation;
+using SHBMS.Service.Interface;
 using System.Collections.ObjectModel;
-using System.Windows;
+using System.Windows.Input;
 namespace SHBMS.ViewModel;
-public class ServiceRequestsViewModel : DatabaseViewModel
+
+// Processing only. New orders are placed on Booking services.
+public sealed class ServiceRequestsViewModel : DatabaseViewModel
 {
-    public ObservableCollection<SHBMS.Model.BookingService> Orders { get; } = new();
-    public ObservableCollection<Booking> Bookings { get; } = new();
-    public ObservableCollection<SHBMS.Model.Service> Services { get; } = new();
-    private SHBMS.Model.BookingService? _selectedOrder;
-    public SHBMS.Model.BookingService? SelectedOrder
+    private readonly IServiceRequestManager _manager;
+    private List<GuestServiceRequest> _all = new();
+    public bool CanManageRequests => Session.CanManageServiceRequests;
+    public ObservableCollection<GuestServiceRequest> Requests { get; } = new();
+    public string[] Statuses { get; } = { "Pending", "InProgress", "Resolved", "Rejected" };
+    public string[] Filters { get; } = { "All", "Pending", "InProgress", "Resolved", "Rejected" };
+    public string Summary => $"{Requests.Count} service orders";
+    private string _searchText = "";
+    public string SearchText
     {
-        get => _selectedOrder;
+        get => _searchText;
+        set { if (SetProperty(ref _searchText, value)) ApplyFilter(); }
+    }
+    private string _statusFilter = "All";
+    public string StatusFilter
+    {
+        get => _statusFilter;
+        set { if (SetProperty(ref _statusFilter, value)) ApplyFilter(); }
+    }
+    private GuestServiceRequest? _selectedRequest;
+    public GuestServiceRequest? SelectedRequest
+    {
+        get => _selectedRequest;
         set
         {
-            SetProperty(ref _selectedOrder, value);
-            SelectedBooking = Bookings.FirstOrDefault(b => b.BookingId == value?.BookingId);
-            SelectedService = Services.FirstOrDefault(s => s.ServiceId == value?.ServiceId);
-            QuantityText = value?.Quantity.ToString() ?? "1";
-            OnPropertyChanged(nameof(IsNew));
+            SetProperty(ref _selectedRequest, value);
+            SelectedStatus = value?.Status ?? "Pending";
+            CommandManager.InvalidateRequerySuggested();
         }
     }
-    private Booking? _selectedBooking;
-    public Booking? SelectedBooking { get => _selectedBooking; set => SetProperty(ref _selectedBooking, value); }
-    private SHBMS.Model.Service? _selectedService;
-    public SHBMS.Model.Service? SelectedService { get => _selectedService; set => SetProperty(ref _selectedService, value); }
-    private string _quantityText = "1";
-    public string QuantityText { get => _quantityText; set => SetProperty(ref _quantityText, value); }
-    public bool IsNew => SelectedOrder == null;
-    public RelayCommand NewCommand { get; }
-    public RelayCommand SaveCommand { get; }
-    public RelayCommand DeleteCommand { get; }
-    public ServiceRequestsViewModel()
+    private string _selectedStatus = "Pending";
+    public string SelectedStatus
     {
-        NewCommand = new RelayCommand(_ => SelectedOrder = null, _ => !IsBusy);
-        SaveCommand = DatabaseCommand(SaveAsync);
-        DeleteCommand = DatabaseCommand(DeleteAsync, () => SelectedOrder != null);
+        get => _selectedStatus;
+        set { SetProperty(ref _selectedStatus, value); CommandManager.InvalidateRequerySuggested(); }
+    }
+    public RelayCommand UpdateStatusCommand { get; }
+    public ServiceRequestsViewModel() : this(new ServiceRequestManager()) { }
+    public ServiceRequestsViewModel(IServiceRequestManager manager)
+    {
+        _manager = manager;
+        UpdateStatusCommand = DatabaseCommand(UpdateStatusAsync, () => CanManageRequests
+            && SelectedRequest != null && (SelectedRequest.Status == "Pending" || SelectedRequest.Status == "InProgress")
+            && SelectedStatus != "Pending" && SelectedStatus != SelectedRequest.Status);
     }
     protected override async Task LoadDataAsync()
     {
-        using var db = new Prn212SbhmsContext();
-        var bookings = await db.Bookings.AsNoTracking().Where(b => !b.IsDeleted && b.BookingStatus == "CHECKED_IN").OrderBy(b => b.BookingId).ToListAsync();
-        var services = await db.Services.AsNoTracking().OrderBy(s => s.ServiceName).ToListAsync();
-        var orders = await db.BookingServices.AsNoTracking().Include(o => o.Service).Include(o => o.Booking)
-            .Where(o => !o.Booking.IsDeleted).OrderBy(o => o.BookingId).ToListAsync();
-        Bookings.Clear(); foreach (var b in bookings) Bookings.Add(b);
-        Services.Clear(); foreach (var s in services) Services.Add(s);
-        Orders.Clear(); foreach (var o in orders) Orders.Add(o);
-        SelectedOrder = null;
+        if (!CanManageRequests) throw new UnauthorizedAccessException("Only Staff can process service requests.");
+        _all = await _manager.GetRequestsAsync();
+        ApplyFilter();
     }
-    private async Task SaveAsync()
+    private void ApplyFilter()
     {
-        string? bookingId = SelectedOrder?.BookingId ?? SelectedBooking?.BookingId;
-        string? serviceId = SelectedOrder?.ServiceId ?? SelectedService?.ServiceId;
-        string? employeeId = Session.CurrentAccount?.EmployeeId;
-        if (bookingId == null || serviceId == null || employeeId == null
-            || !int.TryParse(QuantityText, out int quantity) || quantity < 1)
-        { StatusMessage = "Select a booking and service, enter a positive quantity, and use a linked employee account."; return; }
-        using var db = new Prn212SbhmsContext();
-        var booking = await db.Bookings.FindAsync(bookingId);
-        if (booking == null || booking.IsDeleted || booking.BookingStatus != "CHECKED_IN")
-        { StatusMessage = "Service orders can only be edited for checked-in bookings."; return; }
-        var service = await db.Services.FindAsync(serviceId);
-        if (service == null) { StatusMessage = "Service no longer exists."; return; }
-        var order = await db.BookingServices.FindAsync(bookingId, serviceId);
-        if (IsNew && order != null) { StatusMessage = "This service is already ordered. Select its row to update the quantity."; return; }
-        if (!IsNew && order == null) { StatusMessage = "Order no longer exists. Refresh the list."; return; }
-        if (order == null)
-        {
-            order = new SHBMS.Model.BookingService { BookingId = bookingId, ServiceId = serviceId,
-                UnitPrice = service.UnitPrice, OrderedByEmployee = employeeId };
-            db.BookingServices.Add(order);
-        }
-        order.Quantity = quantity;
-        await db.SaveChangesAsync(); await LoadDataAsync(); StatusMessage = "Service order saved to database.";
+        int? selectedId = SelectedRequest?.Id;
+        string keyword = SearchText.Trim();
+        var filtered = _all.Where(r => (StatusFilter == "All" || r.Status == StatusFilter)
+            && (keyword.Length == 0 || Contains(r.BookingId, keyword) || Contains(r.CustomerName, keyword)
+                || Contains(r.CustomerId, keyword) || Contains(r.ServiceName, keyword) || Contains(r.Details, keyword)));
+        Requests.Clear(); foreach (var request in filtered) Requests.Add(request);
+        SelectedRequest = Requests.FirstOrDefault(r => r.Id == selectedId);
+        OnPropertyChanged(nameof(Summary));
     }
-    private async Task DeleteAsync()
+    private async Task UpdateStatusAsync()
     {
-        if (SelectedOrder == null) return;
-        if (MessageBox.Show("Remove the selected service order?", "Remove service", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
-        using var db = new Prn212SbhmsContext();
-        var order = await db.BookingServices.Include(o => o.Booking).FirstOrDefaultAsync(o =>
-            o.BookingId == SelectedOrder.BookingId && o.ServiceId == SelectedOrder.ServiceId);
-        if (order == null) { StatusMessage = "Order no longer exists. Refresh the list."; return; }
-        if (order.Booking.IsDeleted || order.Booking.BookingStatus != "CHECKED_IN")
-        { StatusMessage = "Service orders can only be removed for checked-in bookings."; return; }
-        db.BookingServices.Remove(order); await db.SaveChangesAsync(); await LoadDataAsync(); StatusMessage = "Service order removed.";
+        if (SelectedRequest == null) return;
+        bool updated = await _manager.UpdateStatusAsync(SelectedRequest.Id, SelectedStatus,
+            Session.CurrentAccount?.EmployeeId ?? "");
+        await LoadDataAsync();
+        Notify(updated ? "Service status updated. Only completed orders are charged." : "Service order no longer exists.",
+            updated ? "success" : "warning");
     }
 }

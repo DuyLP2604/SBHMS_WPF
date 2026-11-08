@@ -19,6 +19,11 @@ public class CheckOutViewModel : DatabaseViewModel
     public string Summary => $"{Bookings.Count} checked-in bookings";
     public string RoomText => SelectedBooking == null ? "" : string.Join(", ", SelectedBooking.Rooms.Select(r => r.AssignedRooms));
     public decimal AmountDue => Math.Max(0, SelectedBooking?.RemainingAmount ?? 0);
+    public bool CanCompleteCheckout => SelectedBooking != null;
+    public string ServiceRequestHint => SelectedBooking == null ? ""
+        : SelectedBooking.OpenServiceRequestCount > 0
+            ? $"{SelectedBooking.OpenServiceRequestCount} unfinished service order(s) will be rejected at checkout without a charge."
+            : "Only completed and previously recorded services are charged.";
     public decimal CreditBalance => Math.Max(0, -(SelectedBooking?.RemainingAmount ?? 0));
 
     private string _searchText = "";
@@ -37,6 +42,7 @@ public class CheckOutViewModel : DatabaseViewModel
             CashReceived = false;
             OnPropertyChanged(nameof(HasSelection)); OnPropertyChanged(nameof(RoomText));
             OnPropertyChanged(nameof(AmountDue)); OnPropertyChanged(nameof(CreditBalance));
+            OnPropertyChanged(nameof(CanCompleteCheckout)); OnPropertyChanged(nameof(ServiceRequestHint));
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -54,7 +60,7 @@ public class CheckOutViewModel : DatabaseViewModel
         BookingsView.Filter = item => item is BookingDto b && (string.IsNullOrWhiteSpace(SearchText)
             || Contains(b.BookingId, SearchText.Trim()) || Contains(b.CustomerName, SearchText.Trim())
             || Contains(b.CustomerPhone, SearchText.Trim()) || b.Rooms.Any(r => Contains(r.AssignedRooms, SearchText.Trim())));
-        CheckOutCommand = DatabaseCommand(CheckOutAsync, () => CanOperate && HasSelection && (AmountDue == 0 || CashReceived));
+        CheckOutCommand = DatabaseCommand(CheckOutAsync, () => CanOperate && CanCompleteCheckout && (AmountDue == 0 || CashReceived));
     }
 
     protected override async Task LoadDataAsync()
