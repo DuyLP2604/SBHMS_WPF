@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SHBMS.Helper;
 using SHBMS.Model;
@@ -16,6 +17,26 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     public ObservableCollection<Nationality> Nationalities { get; } = new();
     public ICollectionView CustomersView { get; }
 
+    // SelectedCus is the original row. SelectedItem is the editable copy.
+    private Customer? _selectedCus;
+    public Customer? SelectedCus
+    {
+        get => _selectedCus;
+        set
+        {
+            if (!SetProperty(ref _selectedCus, value)) return;
+            if (value != null) SelectedItem = CopyCustomer(value);
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private Customer _selectedItem = EmptyCustomer();
+    public Customer SelectedItem
+    {
+        get => _selectedItem;
+        private set => SetProperty(ref _selectedItem, value);
+    }
+
     private string _searchText = "";
     public string SearchText
     {
@@ -23,45 +44,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         set => SetProperty(ref _searchText, value);
     }
 
-    // SelectedItem: row selected in the grid.
-    // TextBoxItem: a separate Customer copy used by the input form.
-    private Customer? _selectedItem;
-    public Customer? SelectedItem
-    {
-        get => _selectedItem;
-        set
-        {
-            if (!SetProperty(ref _selectedItem, value)) return;
-
-            if (value != null)
-            {
-                TextBoxItem = CloneCustomer(value);
-                StatusMessage = "";
-            }
-
-            // Clearing the grid selection does not change the form.
-            // New explicitly clears the form below.
-            CommandManager.InvalidateRequerySuggested();
-        }
-    }
-
-    private Customer _textBoxItem = EmptyCustomer();
-    public Customer TextBoxItem
-    {
-        get => _textBoxItem;
-        private set
-        {
-            SetProperty(ref _textBoxItem, value);
-            OnPropertyChanged(nameof(IsNew));
-            CommandManager.InvalidateRequerySuggested();
-        }
-    }
-
-    // New customers have no ID until Save generates one.
-    public bool IsNew => string.IsNullOrEmpty(TextBoxItem.CustomerId);
-
     public RelayCommand NewCommand { get; }
-    public RelayCommand CopyCommand { get; }
     public RelayCommand SaveCommand { get; }
     public RelayCommand DeleteCommand { get; }
     public RelayCommand SearchCommand { get; }
@@ -74,16 +57,16 @@ public class CustomerProfilesViewModel : DatabaseViewModel
             (string.IsNullOrWhiteSpace(SearchText)
              || Contains(c.CustomerId, SearchText.Trim())
              || Contains(c.FullName, SearchText.Trim())
+             || Contains(c.IdentityNumber, SearchText.Trim())
              || Contains(c.Phone, SearchText.Trim())
              || Contains(c.Email, SearchText.Trim())
-             || Contains(c.IdentityNumber, SearchText.Trim()));
+             || Contains(c.Address, SearchText.Trim())
+             || Contains(c.NationalityName, SearchText.Trim()));
 
-        NewCommand = new RelayCommand(_ => PrepareNewForm(), _ => !IsBusy);
-        CopyCommand = new RelayCommand(_ => CopyToNew(),
-            _ => !IsBusy && !IsNew);
-        SaveCommand = DatabaseCommand(SaveAsync);
-        DeleteCommand = DatabaseCommand(DeleteAsync, () => SelectedItem != null);
-        SearchCommand = new RelayCommand(_ => CustomersView.Refresh(), _ => !IsBusy);
+        NewCommand = DatabaseCommand(CreateAsync);
+        SaveCommand = DatabaseCommand(UpdateAsync);
+        DeleteCommand = DatabaseCommand(DeleteAsync);
+        SearchCommand = new RelayCommand(_ => Search(), _ => !IsBusy);
         ShowAllCommand = new RelayCommand(_ =>
         {
             SearchText = "";
@@ -93,17 +76,11 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
     private static Customer EmptyCustomer() => new()
     {
-        CustomerId = "",
-        FullName = "",
-        IdentityNumber = "",
-        Phone = "",
-        Email = "",
-        Address = "",
-        NationalityId = null
+        CustomerId = "(auto)", FullName = "", Phone = "",
+        IdentityNumber = "", Email = "", Address = ""
     };
 
-    // Copy only scalar fields; do not copy EF navigation collections.
-    private static Customer CloneCustomer(Customer source) => new()
+    private static Customer CopyCustomer(Customer source) => new()
     {
         CustomerId = source.CustomerId,
         FullName = source.FullName ?? "",
@@ -114,25 +91,10 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         NationalityId = source.NationalityId
     };
 
-    private void PrepareNewForm()
+    private void ClearForm()
     {
-        SelectedItem = null;
-        _editingCustomerId = null;
-        TextBoxItem = EmptyCustomer();
-        StatusMessage = "";
-        OnPropertyChanged(nameof(IsNew));
-        CommandManager.InvalidateRequerySuggested();
-    }
-
-    private void CopyToNew()
-    {
-        // Preserve edits already entered on the form, without saving them.
-        var copy = CloneCustomer(TextBoxItem);
-        PrepareNewForm();
-        copy.CustomerId = "";
-        copy.IdentityNumber = "";
-        TextBoxItem = copy;
-        Notify("Customer details copied. Enter a new identity number if needed, then save.", "info");
+        SelectedCus = null;
+        SelectedItem = EmptyCustomer();
     }
 
     protected override async Task LoadDataAsync()
@@ -140,111 +102,185 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         using var db = new Prn212SbhmsContext();
         var nations = await db.Nationalities.AsNoTracking()
             .OrderBy(n => n.NationalityName).ToListAsync();
-        var data = await db.Customers.AsNoTracking()
-            .Include(c => c.Nationality)
-            .OrderBy(c => c.CustomerId).ToListAsync();
+        var customers = await db.Customers.AsNoTracking()
+            .Include(c => c.Nationality).OrderBy(c => c.CustomerId).ToListAsync();
 
         Nationalities.Clear();
-        Nationalities.Add(new Nationality
-        {
-            NationalityId = "",
-            NationalityName = ""
-        }); // Empty option: nationality is optional.
+        Nationalities.Add(new Nationality { NationalityId = "", NationalityName = "" });
         foreach (var nation in nations) Nationalities.Add(nation);
-
         Customers.Clear();
-        foreach (var customer in data) Customers.Add(customer);
-        PrepareNewForm();
+        foreach (var customer in customers) Customers.Add(customer);
+        ClearForm();
     }
 
-    private async Task SaveAsync()
+    private bool ValidateForm(Customer form)
     {
-        var form = TextBoxItem;
-        bool isNew = string.IsNullOrEmpty(form.CustomerId);
-        string? id = isNew ? null : form.CustomerId;
-
-        if (string.IsNullOrWhiteSpace(form.FullName) ||
-            string.IsNullOrWhiteSpace(form.Phone))
+        if (string.IsNullOrWhiteSpace(form.FullName))
         {
-            Notify("Full name and phone are required.", "warning");
-            return;
+            Notify("Full name is required.", "warning");
+            return false;
         }
-
+        if (string.IsNullOrWhiteSpace(form.Phone))
+        {
+            Notify("Phone number is required.", "warning");
+            return false;
+        }
         if (form.FullName.Trim().Length > 100 || form.Phone.Trim().Length > 15
             || (form.IdentityNumber?.Trim().Length ?? 0) > 20
             || (form.Email?.Trim().Length ?? 0) > 100
             || (form.Address?.Trim().Length ?? 0) > 200)
         {
-            Notify("A field exceeds its allowed length.", "warning");
-            return;
+            Notify("One or more fields exceed the allowed length.", "warning");
+            return false;
         }
-
-        if (!string.IsNullOrWhiteSpace(form.Email) &&
-            (!MailAddress.TryCreate(form.Email.Trim(), out var mail)
-             || mail.Address != form.Email.Trim()))
+        if (!string.IsNullOrWhiteSpace(form.Email)
+            && (!MailAddress.TryCreate(form.Email.Trim(), out var email)
+                || !email.Address.Equals(form.Email.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
             Notify("Invalid email address.", "warning");
-            return;
+            return false;
+        }
+        return true;
+    }
+
+    private async Task<bool> ValidateDatabaseAsync(
+        Prn212SbhmsContext db, Customer form, string? excludeId = null)
+    {
+        // Check all customers in the database, excluding the row being updated.
+        string phone = form.Phone.Trim();
+        if (await db.Customers.AnyAsync(c =>
+            c.CustomerId != excludeId && c.Phone.Trim() == phone))
+        {
+            Notify("Phone number already exists. Enter a different phone number.", "warning");
+            return false;
         }
 
-        using var db = new Prn212SbhmsContext();
+        string? email = EntityIds.Optional(form.Email);
+        if (email != null)
+        {
+            string normalizedEmail = email.ToLower();
+            if (await db.Customers.AnyAsync(c =>
+                c.CustomerId != excludeId && c.Email != null
+                && c.Email.Trim().ToLower() == normalizedEmail))
+            {
+                Notify("Email already exists. Enter a different email address.", "warning");
+                return false;
+            }
+        }
+
         string? identity = EntityIds.Optional(form.IdentityNumber);
         if (identity != null && await db.Customers.AnyAsync(c =>
-            c.IdentityNumber == identity && c.CustomerId != id))
+            c.IdentityNumber == identity && c.CustomerId != excludeId))
         {
-            Notify("Identity number already exists.", "warning");
-            return;
+            Notify("Identity number already exists. Enter a different identity number.", "warning");
+            return false;
         }
-
-        Customer entity;
-        if (isNew)
-        {
-            entity = new Customer
-            {
-                CustomerId = EntityIds.Next(
-                    await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3)
-            };
-        }
-        else
-        {
-            var existingCustomer = await db.Customers.FindAsync(id);
-            if (existingCustomer == null)
-            {
-                Notify("Customer no longer exists. Refresh the list.", "warning");
-                return;
-            }
-            entity = existingCustomer;
-        }
-
         string? nationalityId = EntityIds.Optional(form.NationalityId);
-        if (nationalityId != null && !await db.Nationalities
-            .AnyAsync(n => n.NationalityId == nationalityId))
+        if (nationalityId != null && !await db.Nationalities.AnyAsync(n => n.NationalityId == nationalityId))
         {
             Notify("Select a nationality from the list.", "warning");
-            return;
+            return false;
         }
+        return true;
+    }
 
+    private static void ApplyForm(Customer form, Customer entity)
+    {
         entity.FullName = form.FullName.Trim();
         entity.Phone = form.Phone.Trim();
-        entity.IdentityNumber = identity;
+        entity.IdentityNumber = EntityIds.Optional(form.IdentityNumber);
         entity.Email = EntityIds.Optional(form.Email);
         entity.Address = EntityIds.Optional(form.Address);
-        entity.NationalityId = nationalityId;
+        entity.NationalityId = EntityIds.Optional(form.NationalityId);
+    }
 
-        if (isNew) db.Customers.Add(entity);
-        await db.SaveChangesAsync();
+    private async Task CreateAsync()
+    {
+        // New creates a different customer from the form; it never updates SelectedCus.
+        var form = CopyCustomer(SelectedItem);
+        if (!ValidateForm(form)) return;
+        using var db = new Prn212SbhmsContext();
+        if (!await ValidateDatabaseAsync(db, form)) return;
+
+        var customer = new Customer
+        {
+            CustomerId = EntityIds.Next(
+                await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3)
+        };
+        ApplyForm(form, customer);
+        db.Customers.Add(customer);
+        if (!await SaveCustomerChangesAsync(db)) return;
+
+        string newId = customer.CustomerId;
+        SearchText = "";
         await LoadDataAsync();
-        Notify(isNew ? "Customer added successfully." : "Customer updated successfully.", "success");
+        SelectedCus = Customers.FirstOrDefault(c => c.CustomerId == newId);
+        Notify($"Customer {newId} created successfully.", "success");
+    }
+
+    private async Task UpdateAsync()
+    {
+        if (SelectedCus == null)
+        {
+            Notify("Select a customer to update. Use New customer to create one from the form.", "warning");
+            return;
+        }
+        string id = SelectedCus.CustomerId;
+        var form = CopyCustomer(SelectedItem);
+        if (!ValidateForm(form)) return;
+        using var db = new Prn212SbhmsContext();
+        if (!await ValidateDatabaseAsync(db, form, id)) return;
+        var customer = await db.Customers.FindAsync(id);
+        if (customer == null)
+        {
+            Notify("Customer no longer exists. Refresh the list.", "warning");
+            return;
+        }
+        ApplyForm(form, customer);
+        if (!await SaveCustomerChangesAsync(db)) return;
+        SearchText = "";
+        await LoadDataAsync();
+        Notify("Customer updated successfully.", "success");
+    }
+
+    private async Task<bool> SaveCustomerChangesAsync(Prn212SbhmsContext db)
+    {
+        try
+        {
+            await db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException ex) when (ex.GetBaseException() is SqlException sql
+            && (sql.Number == 2601 || sql.Number == 2627))
+        {
+            // The database is still authoritative if another user saves concurrently.
+            string message = ex.GetBaseException().Message;
+            if (message.Contains("UX_CUSTOMER_Identity_NotNull", StringComparison.OrdinalIgnoreCase))
+                Notify("Identity number already exists. Enter a different identity number.", "warning");
+            else if (message.Contains("PK_CUSTOMER", StringComparison.OrdinalIgnoreCase))
+                Notify("Customer ID already exists. Please try creating the customer again.", "warning");
+            else
+                Notify("Customer information conflicts with an existing record. Refresh and try again.", "warning");
+            return false;
+        }
+    }
+
+    private void Search()
+    {
+        CustomersView.Refresh();
+        if (CustomersView.IsEmpty) Notify("No customers found.", "warning");
     }
 
     private async Task DeleteAsync()
     {
-        if (SelectedItem == null) return;
-        string id = SelectedItem.CustomerId;
-        if (MessageBox.Show($"Delete customer {id}?", "Delete customer",
-            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+        if (SelectedCus == null)
+        {
+            Notify("Please select a customer to delete.", "warning");
             return;
-
+        }
+        string id = SelectedCus.CustomerId;
+        if (MessageBox.Show($"Delete customer {id}?", "Delete customer",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         using var db = new Prn212SbhmsContext();
         if (await db.Bookings.AnyAsync(b => b.CustomerId == id)
             || await db.Complaints.AnyAsync(c => c.CustomerId == id))
@@ -252,17 +288,16 @@ public class CustomerProfilesViewModel : DatabaseViewModel
             Notify("This customer has linked bookings or feedback and cannot be deleted.", "warning");
             return;
         }
-
-        var entity = await db.Customers.FindAsync(id);
-        if (entity == null)
+        var customer = await db.Customers.FindAsync(id);
+        if (customer == null)
         {
             Notify("Customer no longer exists. Refresh the list.", "warning");
             return;
         }
-
-        db.Customers.Remove(entity);
+        db.Customers.Remove(customer);
         await db.SaveChangesAsync();
+        SearchText = "";
         await LoadDataAsync();
-        Notify("Customer deleted.", "success");
+        Notify("Customer deleted successfully.", "success");
     }
 }
