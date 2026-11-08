@@ -251,7 +251,7 @@ BEGIN TRY
         Title NVARCHAR(200) NOT NULL CONSTRAINT DF_COMPLAINT_Title DEFAULT N'Phản hồi khách hàng',
         Content NVARCHAR(MAX) NOT NULL,
         CreatedAt DATETIME NOT NULL CONSTRAINT DF_COMPLAINT_CreatedAt DEFAULT GETDATE(),
-        Status NVARCHAR(30) NOT NULL CONSTRAINT DF_COMPLAINT_Status DEFAULT N'Chưa xử lý',
+        Status NVARCHAR(30) NOT NULL CONSTRAINT DF_COMPLAINT_Status DEFAULT N'Pending',
         CustomerID CHAR(6) NULL,
         ReplyMessage NVARCHAR(MAX) NULL,
         EmployeeID CHAR(6) NULL,
@@ -261,7 +261,7 @@ BEGIN TRY
         CONSTRAINT FK_COMPLAINT_CUSTOMER FOREIGN KEY (CustomerID) REFERENCES dbo.CUSTOMER(CustomerID),
         CONSTRAINT FK_COMPLAINT_EMPLOYEE FOREIGN KEY (EmployeeID) REFERENCES dbo.EMPLOYEE(EmployeeID),
         CONSTRAINT FK_COMPLAINT_RESOLVED_EMPLOYEE FOREIGN KEY (ResolvedByEmployee) REFERENCES dbo.EMPLOYEE(EmployeeID),
-        CONSTRAINT CK_COMPLAINT_Status CHECK (Status IN (N'Chưa xử lý', N'Đang xử lý', N'Đã xử lý'))
+        CONSTRAINT CK_COMPLAINT_Status CHECK (Status IN (N'Pending', N'Resolved'))
     );
 
     CREATE UNIQUE INDEX UX_CUSTOMER_Identity_NotNull
@@ -320,58 +320,59 @@ BEGIN TRY
         (N'EMP002', N'Trần Quốc Bảo', N'Manager', N'0901000003', N'nv03.hbms@gmail.com', 2),
         (N'EMP003', N'Nguyễn Minh Anh', N'Staff', N'0901000002', N'nv02.hbms@gmail.com', 3);
 
+    -- Synthetic identity/passport numbers for sample data only.
     INSERT INTO dbo.CUSTOMER (CustomerID, FullName, IdentityNumber, Phone, Email, Address, NationalityID)
     VALUES
-        (N'CUS001', N'Phạm Minh Tuấn', NULL, N'0903456789', N'tuan.pham@gmail.com', N'Quận 1, TP.HCM', N'N01'),
-        (N'CUS002', N'Nguyễn Tuyết Mai', NULL, N'0912888999', N'maituyet92@yahoo.com', N'Quận Cầu Giấy, Hà Nội', N'N01'),
-        (N'CUS003', N'Lê Hoàng Nam', NULL, N'0987111222', N'namlh@gmail.com', N'Quận 7, TP.HCM', N'N01'),
-        (N'CUS004', N'Trần Thu Hà', NULL, N'0356123456', N'hatran@fpt.com.vn', N'Quận Tây Hồ, Hà Nội', N'N01'),
-        (N'CUS005', N'Robert Harrison', NULL, N'0775123456', N'robert.h@outlook.com', N'London, United Kingdom', N'N13'),
-        (N'CUS006', N'Chen Wei', NULL, N'0933444555', N'chenwei88@qq.com', N'Beijing, China', N'N03'),
-        (N'CUS007', N'Hans Müller', NULL, N'0888777666', N'hans.m@gmail.de', N'Berlin, Germany', N'N15'),
-        (N'CUS008', N'Kim Ji-won', NULL, N'0944555666', N'jiwon.kim@naver.com', N'Seoul, South Korea', N'N04'),
-        (N'CUS009', N'Jean Dupont', NULL, N'0766112233', N'jean.dupont@france.fr', N'Paris, France', N'N14'),
-        (N'CUS010', N'Đặng Phương Thảo', NULL, N'0399123456', N'thaophuong@gmail.com', N'Quận Hải Châu, Đà Nẵng', N'N01'),
-        (N'CUS011', N'Vũ Đình Tùng', NULL, N'0988123123', N'tung.vu@gmail.com', N'Quận 3, TP.HCM', N'N01'),
-        (N'CUS012', N'Lê Thị Thu Hương', NULL, N'0977234234', N'huongle99@yahoo.com', N'Quận Đống Đa, Hà Nội', N'N01'),
-        (N'CUS013', N'Nguyễn Quang Hải', NULL, N'0912345345', N'hai.nq@fpt.edu.vn', N'Ninh Kiều, Cần Thơ', N'N01'),
-        (N'CUS014', N'Phan Thanh Bình', NULL, N'0933456456', N'binhpt@gmail.com', N'Quận 1, TP.HCM', N'N01'),
-        (N'CUS015', N'Đỗ Mỹ Linh', NULL, N'0944567567', N'mylinh.do@gmail.com', N'Quận Hoàn Kiếm, Hà Nội', N'N01'),
-        (N'CUS016', N'Bùi Tiến Dũng', NULL, N'0966678678', N'dung.bui@viettel.com.vn', N'Thạch Thất, Hà Nội', N'N01'),
-        (N'CUS017', N'Trần Phương Anh', NULL, N'0888789789', N'phuonganh.t@yahoo.com', N'Quận Sơn Trà, Đà Nẵng', N'N01'),
-        (N'CUS018', N'Lý Nhã Kỳ', NULL, N'0901890890', N'nhaky.ly@gmail.com', N'Quận 7, TP.HCM', N'N01'),
-        (N'CUS019', N'Hoàng Lệ Thu', NULL, N'0922901901', N'thuhl@outlook.com', N'Biên Hòa, Đồng Nai', N'N01'),
-        (N'CUS020', N'Ngô Thanh Vân', NULL, N'0933012012', N'van.ngo@gmail.com', N'Quận Phú Nhuận, TP.HCM', N'N01'),
-        (N'CUS021', N'Võ Hoàng Yến', NULL, N'0944123123', N'hoangyen.vo@gmail.com', N'Quận 4, TP.HCM', N'N01'),
-        (N'CUS022', N'Đinh Ngọc Diệp', NULL, N'0955234234', N'ngocdiep.dinh@yahoo.com', N'Quận Bình Thạnh, TP.HCM', N'N01'),
-        (N'CUS023', N'Lương Xuân Trường', NULL, N'0966345345', N'truong.lx@hagl.com.vn', N'Pleiku, Gia Lai', N'N01'),
-        (N'CUS024', N'Cao Thái Sơn', NULL, N'0977456456', N'soncao@gmail.com', N'Quận 10, TP.HCM', N'N01'),
-        (N'CUS025', N'Hồ Ngọc Hà', NULL, N'0988567567', N'hongocha@gmail.com', N'Quận 2, TP.HCM', N'N01'),
-        (N'CUS026', N'Mai Phương Thúy', NULL, N'0999678678', N'thuymp@gmail.com', N'Quận Cầu Giấy, Hà Nội', N'N01'),
-        (N'CUS027', N'Dương Trương Thiên Lý', NULL, N'0901789789', N'thienly.dt@gmail.com', N'Đồng Tháp', N'N01'),
-        (N'CUS028', N'Tăng Thanh Hà', NULL, N'0912890890', N'hathanh.tang@gmail.com', N'Quận 2, TP.HCM', N'N01'),
-        (N'CUS029', N'Phạm Hương', NULL, N'0923901901', N'huong.pham@gmail.com', N'Hải Phòng', N'N01'),
-        (N'CUS030', N'Nguyễn Thúc Thùy Tiên', NULL, N'0934012012', N'thuytien.nt@gmail.com', N'Quận Gò Vấp, TP.HCM', N'N01'),
-        (N'CUS031', N'Lê Quốc Bảo', NULL, N'0945123123', N'baolq@gmail.com', N'Quận Tân Bình, TP.HCM', N'N01'),
-        (N'CUS032', N'Trần Kim Chi', NULL, N'0956234234', N'kimchi.tran@yahoo.com', N'Quận Thanh Xuân, Hà Nội', N'N01'),
-        (N'CUS033', N'Phan Đình Phùng', NULL, N'0967345345', N'phungpd@gmail.com', N'Vinh, Nghệ An', N'N01'),
-        (N'CUS034', N'Vũ Cát Tường', NULL, N'0978456456', N'cattuong.vu@gmail.com', N'Long Xuyên, An Giang', N'N01'),
-        (N'CUS035', N'Đỗ Trọng Hiếu', NULL, N'0989567567', N'hieudo@gmail.com', N'Quận Hai Bà Trưng, Hà Nội', N'N01'),
-        (N'CUS036', N'Bùi Anh Tuấn', NULL, N'0990678678', N'anhtuan.bui@gmail.com', N'Quận 1, TP.HCM', N'N01'),
-        (N'CUS037', N'Lê Minh Sơn', NULL, N'0902789789', N'sonlm@gmail.com', N'Bắc Ninh', N'N01'),
-        (N'CUS038', N'Hoàng Thùy Linh', NULL, N'0913890890', N'thuylinh.hoang@gmail.com', N'Quận Ba Đình, Hà Nội', N'N01'),
-        (N'CUS039', N'Nguyễn Trần Trung Quân', NULL, N'0924901901', N'trungquan.nt@gmail.com', N'Quận Đống Đa, Hà Nội', N'N01'),
-        (N'CUS040', N'Phạm Tiến Dũng', NULL, N'0935012012', N'dungpt@gmail.com', N'Nha Trang, Khánh Hòa', N'N01'),
-        (N'CUS041', N'Emily Johnson', NULL, N'+12025550141', N'emily.j@yahoo.com', N'Los Angeles, USA', N'N11'),
-        (N'CUS042', N'Michael Brown', NULL, N'+13125550142', N'michael.b@outlook.com', N'Chicago, USA', N'N11'),
-        (N'CUS043', N'Li Na', NULL, N'+8613812340043', N'lina.beijing@qq.com', N'Shanghai, China', N'N03'),
-        (N'CUS044', N'Wang Lei', NULL, N'+8613912340044', N'wanglei88@wechat.com', N'Guangzhou, China', N'N03'),
-        (N'CUS045', N'Park Min-young', NULL, N'+821012340045', N'minyoung.park@naver.com', N'Busan, South Korea', N'N04'),
-        (N'CUS046', N'Lee Jong-suk', NULL, N'+821012340046', N'jongsuk.lee@daum.net', N'Incheon, South Korea', N'N04'),
-        (N'CUS047', N'Sato Kenji', NULL, N'+819012340047', N'kenji.sato@yahoo.co.jp', N'Tokyo, Japan', N'N02'),
-        (N'CUS048', N'Tanaka Yuki', NULL, N'+819012340048', N'yuki.tanaka@gmail.com', N'Osaka, Japan', N'N02'),
-        (N'CUS049', N'Anna Kowalski', NULL, N'+48500123449', N'anna.k@gmail.com', N'Warsaw, Poland', N'N20'),
-        (N'CUS050', N'David Silva', NULL, N'+34600123450', N'david.silva@hotmail.com', N'Madrid, Spain', N'N17');
+        (N'CUS001', N'Phạm Minh Tuấn', N'079099000001', N'0903456789', N'tuan.pham@gmail.com', N'Quận 1, TP.HCM', N'N01'),
+        (N'CUS002', N'Nguyễn Tuyết Mai', N'079099000002', N'0912888999', N'maituyet92@yahoo.com', N'Quận Cầu Giấy, Hà Nội', N'N01'),
+        (N'CUS003', N'Lê Hoàng Nam', N'079099000003', N'0987111222', N'namlh@gmail.com', N'Quận 7, TP.HCM', N'N01'),
+        (N'CUS004', N'Trần Thu Hà', N'079099000004', N'0356123456', N'hatran@fpt.com.vn', N'Quận Tây Hồ, Hà Nội', N'N01'),
+        (N'CUS005', N'Robert Harrison', N'PTEST000005', N'0775123456', N'robert.h@outlook.com', N'London, United Kingdom', N'N13'),
+        (N'CUS006', N'Chen Wei', N'PTEST000006', N'0933444555', N'chenwei88@qq.com', N'Beijing, China', N'N03'),
+        (N'CUS007', N'Hans Müller', N'PTEST000007', N'0888777666', N'hans.m@gmail.de', N'Berlin, Germany', N'N15'),
+        (N'CUS008', N'Kim Ji-won', N'PTEST000008', N'0944555666', N'jiwon.kim@naver.com', N'Seoul, South Korea', N'N04'),
+        (N'CUS009', N'Jean Dupont', N'PTEST000009', N'0766112233', N'jean.dupont@france.fr', N'Paris, France', N'N14'),
+        (N'CUS010', N'Đặng Phương Thảo', N'079099000010', N'0399123456', N'thaophuong@gmail.com', N'Quận Hải Châu, Đà Nẵng', N'N01'),
+        (N'CUS011', N'Vũ Đình Tùng', N'079099000011', N'0988123123', N'tung.vu@gmail.com', N'Quận 3, TP.HCM', N'N01'),
+        (N'CUS012', N'Lê Thị Thu Hương', N'079099000012', N'0977234234', N'huongle99@yahoo.com', N'Quận Đống Đa, Hà Nội', N'N01'),
+        (N'CUS013', N'Nguyễn Quang Hải', N'079099000013', N'0912345345', N'hai.nq@fpt.edu.vn', N'Ninh Kiều, Cần Thơ', N'N01'),
+        (N'CUS014', N'Phan Thanh Bình', N'079099000014', N'0933456456', N'binhpt@gmail.com', N'Quận 1, TP.HCM', N'N01'),
+        (N'CUS015', N'Đỗ Mỹ Linh', N'079099000015', N'0944567567', N'mylinh.do@gmail.com', N'Quận Hoàn Kiếm, Hà Nội', N'N01'),
+        (N'CUS016', N'Bùi Tiến Dũng', N'079099000016', N'0966678678', N'dung.bui@viettel.com.vn', N'Thạch Thất, Hà Nội', N'N01'),
+        (N'CUS017', N'Trần Phương Anh', N'079099000017', N'0888789789', N'phuonganh.t@yahoo.com', N'Quận Sơn Trà, Đà Nẵng', N'N01'),
+        (N'CUS018', N'Lý Nhã Kỳ', N'079099000018', N'0901890890', N'nhaky.ly@gmail.com', N'Quận 7, TP.HCM', N'N01'),
+        (N'CUS019', N'Hoàng Lệ Thu', N'079099000019', N'0922901901', N'thuhl@outlook.com', N'Biên Hòa, Đồng Nai', N'N01'),
+        (N'CUS020', N'Ngô Thanh Vân', N'079099000020', N'0933012012', N'van.ngo@gmail.com', N'Quận Phú Nhuận, TP.HCM', N'N01'),
+        (N'CUS021', N'Võ Hoàng Yến', N'079099000021', N'0944123123', N'hoangyen.vo@gmail.com', N'Quận 4, TP.HCM', N'N01'),
+        (N'CUS022', N'Đinh Ngọc Diệp', N'079099000022', N'0955234234', N'ngocdiep.dinh@yahoo.com', N'Quận Bình Thạnh, TP.HCM', N'N01'),
+        (N'CUS023', N'Lương Xuân Trường', N'079099000023', N'0966345345', N'truong.lx@hagl.com.vn', N'Pleiku, Gia Lai', N'N01'),
+        (N'CUS024', N'Cao Thái Sơn', N'079099000024', N'0977456456', N'soncao@gmail.com', N'Quận 10, TP.HCM', N'N01'),
+        (N'CUS025', N'Hồ Ngọc Hà', N'079099000025', N'0988567567', N'hongocha@gmail.com', N'Quận 2, TP.HCM', N'N01'),
+        (N'CUS026', N'Mai Phương Thúy', N'079099000026', N'0999678678', N'thuymp@gmail.com', N'Quận Cầu Giấy, Hà Nội', N'N01'),
+        (N'CUS027', N'Dương Trương Thiên Lý', N'079099000027', N'0901789789', N'thienly.dt@gmail.com', N'Đồng Tháp', N'N01'),
+        (N'CUS028', N'Tăng Thanh Hà', N'079099000028', N'0912890890', N'hathanh.tang@gmail.com', N'Quận 2, TP.HCM', N'N01'),
+        (N'CUS029', N'Phạm Hương', N'079099000029', N'0923901901', N'huong.pham@gmail.com', N'Hải Phòng', N'N01'),
+        (N'CUS030', N'Nguyễn Thúc Thùy Tiên', N'079099000030', N'0934012012', N'thuytien.nt@gmail.com', N'Quận Gò Vấp, TP.HCM', N'N01'),
+        (N'CUS031', N'Lê Quốc Bảo', N'079099000031', N'0945123123', N'baolq@gmail.com', N'Quận Tân Bình, TP.HCM', N'N01'),
+        (N'CUS032', N'Trần Kim Chi', N'079099000032', N'0956234234', N'kimchi.tran@yahoo.com', N'Quận Thanh Xuân, Hà Nội', N'N01'),
+        (N'CUS033', N'Phan Đình Phùng', N'079099000033', N'0967345345', N'phungpd@gmail.com', N'Vinh, Nghệ An', N'N01'),
+        (N'CUS034', N'Vũ Cát Tường', N'079099000034', N'0978456456', N'cattuong.vu@gmail.com', N'Long Xuyên, An Giang', N'N01'),
+        (N'CUS035', N'Đỗ Trọng Hiếu', N'079099000035', N'0989567567', N'hieudo@gmail.com', N'Quận Hai Bà Trưng, Hà Nội', N'N01'),
+        (N'CUS036', N'Bùi Anh Tuấn', N'079099000036', N'0990678678', N'anhtuan.bui@gmail.com', N'Quận 1, TP.HCM', N'N01'),
+        (N'CUS037', N'Lê Minh Sơn', N'079099000037', N'0902789789', N'sonlm@gmail.com', N'Bắc Ninh', N'N01'),
+        (N'CUS038', N'Hoàng Thùy Linh', N'079099000038', N'0913890890', N'thuylinh.hoang@gmail.com', N'Quận Ba Đình, Hà Nội', N'N01'),
+        (N'CUS039', N'Nguyễn Trần Trung Quân', N'079099000039', N'0924901901', N'trungquan.nt@gmail.com', N'Quận Đống Đa, Hà Nội', N'N01'),
+        (N'CUS040', N'Phạm Tiến Dũng', N'079099000040', N'0935012012', N'dungpt@gmail.com', N'Nha Trang, Khánh Hòa', N'N01'),
+        (N'CUS041', N'Emily Johnson', N'PTEST000041', N'+12025550141', N'emily.j@yahoo.com', N'Los Angeles, USA', N'N11'),
+        (N'CUS042', N'Michael Brown', N'PTEST000042', N'+13125550142', N'michael.b@outlook.com', N'Chicago, USA', N'N11'),
+        (N'CUS043', N'Li Na', N'PTEST000043', N'+8613812340043', N'lina.beijing@qq.com', N'Shanghai, China', N'N03'),
+        (N'CUS044', N'Wang Lei', N'PTEST000044', N'+8613912340044', N'wanglei88@wechat.com', N'Guangzhou, China', N'N03'),
+        (N'CUS045', N'Park Min-young', N'PTEST000045', N'+821012340045', N'minyoung.park@naver.com', N'Busan, South Korea', N'N04'),
+        (N'CUS046', N'Lee Jong-suk', N'PTEST000046', N'+821012340046', N'jongsuk.lee@daum.net', N'Incheon, South Korea', N'N04'),
+        (N'CUS047', N'Sato Kenji', N'PTEST000047', N'+819012340047', N'kenji.sato@yahoo.co.jp', N'Tokyo, Japan', N'N02'),
+        (N'CUS048', N'Tanaka Yuki', N'PTEST000048', N'+819012340048', N'yuki.tanaka@gmail.com', N'Osaka, Japan', N'N02'),
+        (N'CUS049', N'Anna Kowalski', N'PTEST000049', N'+48500123449', N'anna.k@gmail.com', N'Warsaw, Poland', N'N20'),
+        (N'CUS050', N'David Silva', N'PTEST000050', N'+34600123450', N'david.silva@hotmail.com', N'Madrid, Spain', N'N17');
 
     INSERT INTO dbo.ROOM_TYPE (RoomTypeID, TypeName, Capacity, Price, RoomTypeImage, Description)
     VALUES
@@ -418,12 +419,12 @@ BEGIN TRY
         (N'BK0002', N'CUS002', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-03 10:15:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-08', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-10', 120)), N'CHECKED_OUT', NULL),
         (N'BK0003', N'CUS003', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-10 08:30:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-18', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-20', 120)), N'CONFIRMED', NULL),
         (N'BK0004', N'CUS004', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-11 14:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-20', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-22', 120)), N'CONFIRMED', NULL),
-        (N'BK0005', N'CUS005', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-12 16:10:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-21', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-23', 120)), N'PENDING', NULL),
+        (N'BK0005', N'CUS005', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-12 16:10:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-21', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-23', 120)), N'CONFIRMED', NULL),
         (N'BK0006', N'CUS006', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-13 11:45:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-24', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-26', 120)), N'CONFIRMED', NULL),
         (N'BK0007', N'CUS007', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-14 09:20:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-25', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-27', 120)), N'CANCELLED', N'Khách thay đổi lịch trình và hủy đặt phòng.'),
         (N'BK0008', N'CUS008', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-15 13:30:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-28', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-01', 120)), N'CHECKED_IN', NULL),
         (N'BK0009', N'CUS009', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-16 15:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-02', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-04', 120)), N'CONFIRMED', NULL),
-        (N'BK0010', N'CUS010', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-17 06:30:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-05', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-07', 120)), N'PENDING', NULL),
+        (N'BK0010', N'CUS010', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-17 06:30:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-05', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-07', 120)), N'CONFIRMED', NULL),
         (N'BK0011', N'CUS011', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-07-27 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-08-03', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-08-05', 120)), N'CHECKED_OUT', NULL),
         (N'BK0012', N'CUS012', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-07-28 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-08-04', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-08-07', 120)), N'CHECKED_OUT', NULL),
         (N'BK0013', N'CUS013', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-08-02 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-08-09', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-08-11', 120)), N'CHECKED_OUT', NULL),
@@ -449,8 +450,8 @@ BEGIN TRY
         (N'BK0033', N'CUS007', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-21 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-27', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-29', 120)), N'CONFIRMED', NULL),
         (N'BK0034', N'CUS034', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-22 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-09-29', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-01', 120)), N'CHECKED_IN', NULL),
         (N'BK0035', N'CUS035', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-23 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-02', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-04', 120)), N'CONFIRMED', NULL),
-        (N'BK0036', N'CUS036', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-20 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-05', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-08', 120)), N'PENDING', NULL),
-        (N'BK0037', N'CUS037', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-21 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-08', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-10', 120)), N'PENDING', NULL),
+        (N'BK0036', N'CUS036', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-20 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-05', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-08', 120)), N'CONFIRMED', NULL),
+        (N'BK0037', N'CUS037', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-21 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-08', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-10', 120)), N'CONFIRMED', NULL),
         (N'BK0038', N'CUS038', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-22 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-11', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-13', 120)), N'CANCELLED', N'Khách thay đổi lịch trình và hủy đặt phòng.'),
         (N'BK0039', N'CUS038', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-23 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-14', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-16', 120)), N'CONFIRMED', NULL),
         (N'BK0040', N'CUS040', N'EMP003', DATEADD(DAY, @DayShift, CONVERT(DATETIME, '2026-09-20 09:00:00', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-18', 120)), DATEADD(DAY, @DayShift, CONVERT(DATE, '2026-10-21', 120)), N'CONFIRMED', NULL);
@@ -622,12 +623,12 @@ BEGIN TRY
 
     INSERT INTO dbo.COMPLAINT (CustomerID, Title, Content, Status, ReplyMessage, CreatedAt, EmployeeID, ResolvedByEmployee)
     VALUES
-        (N'CUS003', N'Yêu cầu hỗ trợ đặt phòng', N'Tôi muốn kiểm tra lại thông tin phòng đã được sắp xếp cho booking của mình.', N'Chưa xử lý', NULL, DATEADD(HOUR, 10, DATEADD(DAY, -11, CONVERT(DATETIME, @ReferenceDate))), NULL, NULL),
-        (N'CUS008', N'Bổ sung khăn tắm', N'Gia đình tôi cần thêm hai khăn tắm cho phòng 202.', N'Đang xử lý', N'Lễ tân đã chuyển yêu cầu đến bộ phận buồng phòng.', DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', NULL),
-        (N'CUS034', N'Điều chỉnh nhiệt độ điều hòa', N'Điều hòa trong phòng 401 chưa đủ mát vào buổi chiều.', N'Đã xử lý', N'Kỹ thuật đã vệ sinh bộ lọc và kiểm tra nhiệt độ; khách xác nhận phòng đã mát.', DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', N'EMP002'),
-        (N'CUS001', N'Kiểm tra phí giặt ủi', N'Tôi muốn nhận bảng kê chi tiết số lượng quần áo đã giặt.', N'Đã xử lý', N'Đã gửi bảng kê và giải thích đơn giá giặt ủi cho khách.', DATEADD(HOUR, 10, DATEADD(DAY, -22, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', N'EMP002'),
-        (N'CUS040', N'Xác nhận giờ sử dụng spa', N'Tôi muốn đặt lịch spa lúc 16 giờ trong ngày nhận phòng.', N'Chưa xử lý', NULL, DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), NULL, NULL),
-        (N'CUS009', N'Hỗ trợ gửi hành lý', N'Tôi dự kiến đến sớm và muốn gửi hành lý trước giờ nhận phòng.', N'Đang xử lý', N'Lễ tân đã xác nhận có thể giữ hành lý trước giờ nhận phòng.', DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', NULL);
+        (N'CUS003', N'Yêu cầu hỗ trợ đặt phòng', N'Tôi muốn kiểm tra lại thông tin phòng đã được sắp xếp cho booking của mình.', N'Pending', NULL, DATEADD(HOUR, 10, DATEADD(DAY, -11, CONVERT(DATETIME, @ReferenceDate))), NULL, NULL),
+        (N'CUS008', N'Bổ sung khăn tắm', N'Gia đình tôi cần thêm hai khăn tắm cho phòng 202.', N'Pending', N'Lễ tân đã chuyển yêu cầu đến bộ phận buồng phòng.', DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', NULL),
+        (N'CUS034', N'Điều chỉnh nhiệt độ điều hòa', N'Điều hòa trong phòng 401 chưa đủ mát vào buổi chiều.', N'Resolved', N'Kỹ thuật đã vệ sinh bộ lọc và kiểm tra nhiệt độ; khách xác nhận phòng đã mát.', DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', N'EMP002'),
+        (N'CUS001', N'Kiểm tra phí giặt ủi', N'Tôi muốn nhận bảng kê chi tiết số lượng quần áo đã giặt.', N'Resolved', N'Đã gửi bảng kê và giải thích đơn giá giặt ủi cho khách.', DATEADD(HOUR, 10, DATEADD(DAY, -22, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', N'EMP002'),
+        (N'CUS040', N'Xác nhận giờ sử dụng spa', N'Tôi muốn đặt lịch spa lúc 16 giờ trong ngày nhận phòng.', N'Pending', NULL, DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), NULL, NULL),
+        (N'CUS009', N'Hỗ trợ gửi hành lý', N'Tôi dự kiến đến sớm và muốn gửi hành lý trước giờ nhận phòng.', N'Pending', N'Lễ tân đã xác nhận có thể giữ hành lý trước giờ nhận phòng.', DATEADD(HOUR, 10, DATEADD(DAY, 0, CONVERT(DATETIME, @ReferenceDate))), N'EMP003', NULL);
 
     -- Kiểm tra lịch phân phòng, số phòng còn lại và tổng tiền của dữ liệu mẫu.
     IF EXISTS (SELECT 1 FROM dbo.ROOM_ASSIGNMENT AS a
@@ -893,7 +894,7 @@ SELECT RoomTypeID, TypeName, Capacity, Price FROM dbo.ROOM_TYPE ORDER BY RoomTyp
 SELECT BookingID, CustomerID, CheckInDate, CheckOutDate, BookingStatus
 FROM dbo.BOOKING ORDER BY BookingID;
 
-SELECT c.CustomerID, c.FullName, c.NationalityID, n.NationalityName
+SELECT c.CustomerID, c.FullName, c.IdentityNumber, c.NationalityID, n.NationalityName
 FROM dbo.CUSTOMER AS c LEFT JOIN dbo.NATIONALITY AS n ON n.NationalityID = c.NationalityID
 ORDER BY c.CustomerID;
 GO
