@@ -9,8 +9,25 @@ public partial class MainWindow : Window
     private readonly Dictionary<string, UserControl> _pages = new();
     public MainWindow()
     {
-        InitializeComponent(); DataContext = _vm;
-        Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
+        InitializeComponent();
+
+        // Initialize before creating or loading any page.
+        ToastService.Initialize(
+            ToastBorder,
+            ToastTitle,
+            ToastMessage);
+
+        DataContext = _vm;
+
+        Navigate(
+            "Customers",
+            "Customer profiles",
+            CustomerNavButton,
+            () => new CustomerProfilesView());
+
+        // Temporary test: remove this line after confirming the toast appears.
+        Loaded += (_, _) =>
+            ToastService.Show("Toast is working.", "success");
     }
     // Navigation is view behavior. Each page owns its own data ViewModel.
     // Create pages on demand so opening the shell does not query every database table.

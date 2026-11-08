@@ -17,7 +17,13 @@ public partial class Customer
 
     public string? Address { get; set; }
 
-    public string? NationalityName { get; set; }
+    public string? NationalityId { get; set; }
+
+    public virtual Nationality? Nationality { get; set; }
+
+    // Display text comes from the lookup table; only NationalityId is stored.
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? NationalityName => Nationality?.NationalityName;
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
