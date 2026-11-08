@@ -1,8 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.IO;
 
 namespace SHBMS.Model;
 
@@ -45,38 +41,15 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    public virtual DbSet<VwBookingDetail> VwBookingDetails { get; set; }
-
-    public virtual DbSet<VwBookingList> VwBookingLists { get; set; }
-
-    public virtual DbSet<VwRoomList> VwRoomLists { get; set; }
-
-    //Tạo phương thức lấy chuỗi kết nối từ file appsettings.json
-    private string GetConnectionString()
-    {
-        IConfiguration configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", true, true)
-            .Build();
-        var connectionstring = configuration["ConnectionStrings:DefaultConnection"];
-        return connectionstring;
-    }
-
-    //Override lại phương thức OnConfiguring để thiết lập kết nối cho CSDL
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer(GetConnectionString());
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=MSI\\MSSQLSERVER01;Database=PRN212_SBHMS;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.ToTable("BOOKING", tb => tb.HasTrigger("trg_BOOKING_BlockPhysicalDelete"));
-
-            entity.HasIndex(e => new { e.IsDeleted, e.BookingStatus, e.CheckInDate, e.CheckOutDate }, "IX_BOOKING_Active_Status_Dates");
-
-            entity.HasIndex(e => e.CustomerId, "IX_BOOKING_CustomerID");
+            entity.ToTable("BOOKING");
 
             entity.Property(e => e.BookingId)
                 .HasMaxLength(6)
@@ -129,8 +102,6 @@ public partial class Prn212SbhmsContext : DbContext
         modelBuilder.Entity<BookingDetail>(entity =>
         {
             entity.ToTable("BOOKING_DETAIL");
-
-            entity.HasIndex(e => e.RoomTypeId, "IX_BOOKING_DETAIL_RoomTypeID");
 
             entity.HasIndex(e => new { e.BookingId, e.RoomTypeId }, "UQ_BOOKING_DETAIL_Booking_RoomType").IsUnique();
 
@@ -242,10 +213,6 @@ public partial class Prn212SbhmsContext : DbContext
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.ToTable("CUSTOMER");
-
-            entity.HasIndex(e => e.IdentityNumber, "UX_CUSTOMER_Identity_NotNull")
-                .IsUnique()
-                .HasFilter("([IdentityNumber] IS NOT NULL)");
 
             entity.Property(e => e.CustomerId)
                 .HasMaxLength(6)
@@ -389,8 +356,6 @@ public partial class Prn212SbhmsContext : DbContext
         {
             entity.ToTable("ROOM");
 
-            entity.HasIndex(e => new { e.RoomTypeId, e.Status }, "IX_ROOM_RoomType_Status");
-
             entity.HasIndex(e => e.RoomNumber, "UQ_ROOM_Number").IsUnique();
 
             entity.Property(e => e.RoomId)
@@ -455,7 +420,7 @@ public partial class Prn212SbhmsContext : DbContext
 
         modelBuilder.Entity<RoomType>(entity =>
         {
-            entity.ToTable("ROOM_TYPE", tb => tb.HasTrigger("trg_ROOM_TYPE_ProtectBookedCapacity"));
+            entity.ToTable("ROOM_TYPE");
 
             entity.HasIndex(e => e.TypeName, "UQ_ROOM_TYPE_TypeName").IsUnique();
 
@@ -497,94 +462,6 @@ public partial class Prn212SbhmsContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-        });
-
-        modelBuilder.Entity<VwBookingDetail>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_BookingDetail");
-
-            entity.Property(e => e.BookingDetailId).HasColumnName("BookingDetailID");
-            entity.Property(e => e.BookingId)
-                .HasMaxLength(6)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("BookingID");
-            entity.Property(e => e.LineTotal).HasColumnType("decimal(38, 4)");
-            entity.Property(e => e.RoomTypeId)
-                .HasMaxLength(4)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("RoomTypeID");
-            entity.Property(e => e.TypeName).HasMaxLength(50);
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
-        });
-
-        modelBuilder.Entity<VwBookingList>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_BookingList");
-
-            entity.Property(e => e.BookingDate).HasColumnType("datetime");
-            entity.Property(e => e.BookingId)
-                .HasMaxLength(6)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("BookingID");
-            entity.Property(e => e.BookingStatus)
-                .HasMaxLength(30)
-                .IsUnicode(false);
-            entity.Property(e => e.CancellationReason).HasMaxLength(200);
-            entity.Property(e => e.CheckInDeadline).HasPrecision(0);
-            entity.Property(e => e.CheckInDeadlineOverride).HasPrecision(0);
-            entity.Property(e => e.CreatedByEmployeeName).HasMaxLength(100);
-            entity.Property(e => e.CustomerId)
-                .HasMaxLength(6)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("CustomerID");
-            entity.Property(e => e.CustomerName).HasMaxLength(100);
-            entity.Property(e => e.EmployeeId)
-                .HasMaxLength(6)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("EmployeeID");
-            entity.Property(e => e.PaidAmount).HasColumnType("decimal(38, 2)");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(15)
-                .IsUnicode(false);
-            entity.Property(e => e.RoomSubtotal).HasColumnType("decimal(38, 4)");
-            entity.Property(e => e.ServiceSubtotal).HasColumnType("decimal(38, 4)");
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(38, 4)");
-        });
-
-        modelBuilder.Entity<VwRoomList>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_RoomList");
-
-            entity.Property(e => e.Description).HasMaxLength(500);
-            entity.Property(e => e.Price).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.RoomId)
-                .HasMaxLength(3)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("RoomID");
-            entity.Property(e => e.RoomImage).HasMaxLength(100);
-            entity.Property(e => e.RoomNumber).HasMaxLength(20);
-            entity.Property(e => e.RoomTypeId)
-                .HasMaxLength(4)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("RoomTypeID");
-            entity.Property(e => e.RoomTypeImage).HasMaxLength(255);
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.TypeName).HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

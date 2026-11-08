@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
-using SHBMS.Helper;
-using SHBMS.Model;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Mail;
 using System.Windows;
 using System.Windows.Data;
+using Microsoft.EntityFrameworkCore;
+using SHBMS.Helper;
+using SHBMS.Model;
 namespace SHBMS.ViewModel;
 public class CustomerProfilesViewModel : DatabaseViewModel
 {
@@ -50,9 +50,9 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     {
         CustomersView = CollectionViewSource.GetDefaultView(Customers);
         CustomersView.Filter = item => item is Customer c && (string.IsNullOrWhiteSpace(SearchText)
-            || Contains(c.CustomerId, SearchText.Trim()) || Contains(c.FullName, SearchText.Trim())
-            || Contains(c.Phone, SearchText.Trim()) || Contains(c.Email, SearchText.Trim())
-            || Contains(c.IdentityNumber, SearchText.Trim()));
+         || Contains(c.CustomerId, SearchText.Trim()) || Contains(c.FullName, SearchText.Trim())
+         || Contains(c.Phone, SearchText.Trim()) || Contains(c.Email, SearchText.Trim())
+         || Contains(c.IdentityNumber, SearchText.Trim()));
         NewCommand = new RelayCommand(_ => SelectedCustomer = null, _ => !IsBusy);
         CopyCommand = new RelayCommand(_ =>
         {

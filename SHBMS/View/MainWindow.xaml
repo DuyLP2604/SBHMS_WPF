@@ -41,6 +41,7 @@
                         <Button x:Name="ServiceRequestNavButton" Content="Booking services" Style="{StaticResource NavButton}" Click="ServiceRequest_Click"/>
                         <Button x:Name="FeedbackNavButton" Content="Guest feedback" Style="{StaticResource NavButton}" Click="Feedback_Click"/>
                         <Button x:Name="InvoiceNavButton" Content="Invoices" Style="{StaticResource NavButton}" Click="Invoice_Click"/>
+                        <Button x:Name="RevenueNavButton" Content="Revenue &amp; pricing" Style="{StaticResource NavButton}" Click="Revenue_Click"/>
                         <Button x:Name="RoomTypeNavButton" Content="Room types" Style="{StaticResource NavButton}" Click="RoomTypes_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}"/>
                         <Button x:Name="StaffNavButton" Content="Staff accounts" Style="{StaticResource NavButton}" Click="Staff_Click" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibility}}"/>
                     </StackPanel>
