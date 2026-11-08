@@ -138,9 +138,9 @@ BEGIN TRY
         BookingStatus VARCHAR(30) NOT NULL CONSTRAINT DF_BOOKING_Status DEFAULT 'PENDING',
         CancellationReason NVARCHAR(200) NULL,
         CheckInDeadlineOverride DATETIME2(0) NULL,
-        CheckInDeadline AS ISNULL(
-            CheckInDeadlineOverride,
-            DATEADD(MINUTE, 855, CONVERT(DATETIME2(0), CheckInDate))
+        -- Legacy override is retained for compatibility; check-in uses the arrival date only.
+        CheckInDeadline AS DATEADD(SECOND, -1,
+            DATEADD(DAY, 1, CONVERT(DATETIME2(0), CheckInDate))
         ) PERSISTED,
         IsDeleted BIT NOT NULL CONSTRAINT DF_BOOKING_IsDeleted DEFAULT (0),
         DeletedAt DATETIME2(0) NULL,
@@ -710,7 +710,7 @@ SELECT b.BookingID, b.CustomerID, c.FullName AS CustomerName, c.Phone,
            + ISNULL(s.ServiceSubtotal, 0) AS TotalAmount,
        ISNULL(p.PaidAmount, 0) AS PaidAmount,
        CAST(CASE WHEN b.BookingStatus IN ('PENDING', 'CONFIRMED')
-                      AND SYSDATETIME() > b.CheckInDeadline
+                      AND CONVERT(DATE, SYSDATETIME()) > b.CheckInDate
                  THEN 1 ELSE 0 END AS BIT) AS IsOverdueCheckIn
 FROM dbo.BOOKING AS b
 JOIN dbo.CUSTOMER AS c ON c.CustomerID = b.CustomerID
@@ -771,9 +771,9 @@ BEGIN
         )
             THROW 51001, N'Chỉ Staff được xóa booking quá hạn check-in.', 1;
 
-        DECLARE @Status VARCHAR(30), @Deadline DATETIME2(0), @IsDeleted BIT;
+        DECLARE @Status VARCHAR(30), @CheckInDate DATE, @IsDeleted BIT;
 
-        SELECT @Status = BookingStatus, @Deadline = CheckInDeadline,
+        SELECT @Status = BookingStatus, @CheckInDate = CheckInDate,
                @IsDeleted = IsDeleted
         FROM dbo.BOOKING WITH (UPDLOCK, HOLDLOCK)
         WHERE BookingID = @BookingID;
@@ -787,7 +787,7 @@ BEGIN
 
         DECLARE @Now DATETIME2(7) = SYSDATETIME();
 
-        IF @Now <= @Deadline
+        IF CONVERT(DATE, @Now) <= @CheckInDate
             THROW 51005, N'Booking chưa quá hạn check-in.', 1;
 
         UPDATE dbo.BOOKING

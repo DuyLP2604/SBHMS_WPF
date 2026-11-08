@@ -122,8 +122,8 @@
                                 <TextBlock Text="{Binding SelectedBooking.BookingDate}" Foreground="{StaticResource Navy}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Margin="0,0,16,8">
-                                <TextBlock Text="CHECK-IN DEADLINE" Style="{StaticResource FieldLabel}"/>
-                                <TextBlock Text="{Binding SelectedBooking.CheckInDeadline}" Foreground="{StaticResource Navy}" TextWrapping="Wrap"/>
+                                <TextBlock Text="CHECK-IN DATE (ANY TIME)" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding SelectedBooking.CheckInDate, StringFormat=dd/MM/yyyy}" Foreground="{StaticResource Navy}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
