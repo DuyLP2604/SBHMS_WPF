@@ -80,6 +80,7 @@ public class InvoiceViewModel : DatabaseViewModel
                 .Include(i => i.Booking).ThenInclude(b => b.Customer)
                 .Include(i => i.Booking).ThenInclude(b => b.BookingDetails).ThenInclude(bd => bd.RoomType)
                 .Include(i => i.Booking).ThenInclude(b => b.BookingServices).ThenInclude(bs => bs.Service)
+                .Where(i => i.Booking != null && i.Booking.BookingStatus == "CHECKED_OUT")
                 .AsQueryable();
 
             // Filter by search text if provided
@@ -95,14 +96,14 @@ public class InvoiceViewModel : DatabaseViewModel
             {
                 InvoiceId = i.InvoiceId,
                 BookingId = i.BookingId,
-                StayId = i.BookingId,
+                StayId = i.BookingId, 
                 CustomerName = i.Booking.Customer.FullName,
                 EmployeeId = i.EmployeeId,
                 InvoiceDate = i.InvoiceDate,
                 CheckinDate = i.Booking.CheckInDate,
                 CheckoutDate = i.Booking.CheckOutDate,
                 TotalAmount = i.TotalAmount.ToString("N0"),
-               
+
                 Rooms = i.Booking.BookingDetails.Any()
                     ? string.Join(", ", i.Booking.BookingDetails.Select(d => d.RoomType.TypeName))
                     : "No Room",

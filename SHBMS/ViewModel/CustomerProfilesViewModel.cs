@@ -61,7 +61,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
              || Contains(c.Phone, SearchText.Trim())
              || Contains(c.Email, SearchText.Trim())
              || Contains(c.Address, SearchText.Trim())
-             || Contains(c.NationalityName, SearchText.Trim()));
+             || Contains(c.NationalityId, SearchText.Trim()));
 
         NewCommand = DatabaseCommand(CreateAsync);
         SaveCommand = DatabaseCommand(UpdateAsync);
