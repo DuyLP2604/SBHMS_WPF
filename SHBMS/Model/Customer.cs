@@ -17,9 +17,14 @@ public partial class Customer
 
     public string? Address { get; set; }
 
-    public string? NationalityName { get; set; }
+    public string? NationalityId { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
+
+    public virtual Nationality? Nationality { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? NationalityName => Nationality?.NationalityName;
 }

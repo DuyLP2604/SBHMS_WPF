@@ -1,4 +1,4 @@
-﻿
+
 using SHBMS.DTO.Service;
 
 namespace SHBMS.Service.Interface;
@@ -12,5 +12,5 @@ public interface IServiceAvailabilityService
     Task<bool> UpdateAvailabilityAsync(
         string serviceId,
         bool isAvailable,
-        int? stockQuantity);
+        int? stockQuantity, ServiceAvailabilityDto? original = null);
 }

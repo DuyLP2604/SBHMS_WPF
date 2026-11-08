@@ -1,4 +1,4 @@
-﻿
+
 using System;
 
 namespace SHBMS.Model;
@@ -10,6 +10,10 @@ public class ServiceRequest
     public string BookingId { get; set; } = "";
 
     public string ServiceId { get; set; } = "";
+
+    public int Quantity { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+    public DateTime? BilledAt { get; set; }
 
     public string RequestDescription { get; set; } = "";
 

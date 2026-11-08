@@ -20,8 +20,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="1.2*" MinHeight="150"/>
-            <RowDefinition Height="1*" MinHeight="190"/>
+            <RowDefinition Height="1*" MinHeight="150"/>
+            <RowDefinition Height="1.4*" MinHeight="220"/>
         </Grid.RowDefinitions>
         <DockPanel Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right">
@@ -30,41 +30,43 @@
             <StackPanel>
                 <TextBlock Text="Bookings" FontSize="25" FontWeight="Bold" Foreground="{StaticResource Navy}"/>
                 <TextBlock Text="{Binding AccessHint}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,5,0,0"/>
             </StackPanel>
         </DockPanel>
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
-            <StackPanel>
-                <WrapPanel>
-                    <StackPanel Margin="0,0,8,8">
+            <!-- A single row stays compact; scroll horizontally on smaller windows. -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <Grid MinWidth="748">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="145"/>
+                        <ColumnDefinition Width="125"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,8,0">
                         <TextBlock Text="SEARCH" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="170" ToolTip="Booking ID, customer name or phone"/>
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Booking ID, customer name or phone"/>
                     </StackPanel>
-                    <StackPanel Margin="0,0,8,8">
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
                         <TextBlock Text="STATUS" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding FilterStatus, Mode=TwoWay}" Width="145" Height="39" Padding="8,0" VerticalContentAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding FilterStatus, Mode=TwoWay}"
+                                  Height="39" Padding="6,0" VerticalContentAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Margin="0,0,8,8">
-                        <TextBlock Text="CREATED BY" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding Employees}" DisplayMemberPath="Name" SelectedValuePath="EmployeeId" SelectedValue="{Binding FilterEmployeeId, Mode=TwoWay}" Width="190" Height="39" Padding="8,0" VerticalContentAlignment="Center"/>
-                    </StackPanel>
-                </WrapPanel>
-                <WrapPanel>
-                    <StackPanel Margin="0,0,8,8">
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
                         <TextBlock Text="CHECK-IN FROM" Style="{StaticResource FieldLabel}"/>
-                        <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="145" Height="32"/>
+                        <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Height="39"/>
                     </StackPanel>
-                    <StackPanel Margin="0,0,8,8">
+                    <StackPanel Grid.Column="3" Margin="0,0,8,0">
                         <TextBlock Text="CHECK-IN TO" Style="{StaticResource FieldLabel}"/>
-                        <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="145" Height="32"/>
+                        <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Height="39"/>
                     </StackPanel>
-                    <WrapPanel VerticalAlignment="Bottom" Margin="4,0,0,8">
-                        <Button Content="Search" Command="{Binding SearchCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8"/>
-                        <Button Content="Reset" Command="{Binding ResetFiltersCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8"/>
-                        <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8"/>
-                    </WrapPanel>
-                </WrapPanel>
-            </StackPanel>
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Content="Search" Command="{Binding SearchCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,6,0" Padding="10,8" Height="39"/>
+                        <Button Content="Reset" Command="{Binding ResetFiltersCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,6,0" Padding="10,8" Height="39"/>
+                        <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}" Padding="10,8" Height="39"/>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
         </Border>
         <Border Grid.Row="2" Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
             <Grid>
@@ -120,8 +122,8 @@
                                 <TextBlock Text="{Binding SelectedBooking.BookingDate}" Foreground="{StaticResource Navy}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Margin="0,0,16,8">
-                                <TextBlock Text="CHECK-IN DEADLINE" Style="{StaticResource FieldLabel}"/>
-                                <TextBlock Text="{Binding SelectedBooking.CheckInDeadline}" Foreground="{StaticResource Navy}" TextWrapping="Wrap"/>
+                                <TextBlock Text="CHECK-IN DATE (ANY TIME)" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding SelectedBooking.CheckInDate, StringFormat=dd/MM/yyyy}" Foreground="{StaticResource Navy}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Column="2">

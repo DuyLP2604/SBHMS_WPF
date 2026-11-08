@@ -42,7 +42,7 @@ public class BookingService : IBookingService
         await VerifyBookingViewerAsync(db);
         return await db.Customers.AsNoTracking().Where(c => c.Phone.Contains(keyword)).OrderBy(c => c.FullName)
             .Select(c => new BookingCustomerDto { CustomerId = c.CustomerId, FullName = c.FullName, Phone = c.Phone,
-                IdentityNumber = c.IdentityNumber, Email = c.Email, Address = c.Address, NationalityName = c.NationalityName }).ToListAsync();
+                IdentityNumber = c.IdentityNumber, Email = c.Email, Address = c.Address, NationalityName = c.Nationality == null ? null : c.Nationality.NationalityName }).ToListAsync();
     }
     public async Task<List<AvailableRoomTypeDto>> GetAvailableRoomTypesAsync(DateOnly arrival, DateOnly departure)
     {
@@ -142,19 +142,22 @@ public class BookingService : IBookingService
             string? identity = EntityIds.Optional(form.IdentityNumber);
             if (identity != null && await db.Customers.AnyAsync(c => c.IdentityNumber == identity))
                 throw new InvalidOperationException("Identity number already exists. Select the existing customer.");
+            string? nationName = EntityIds.Optional(form.NationalityName);
+            var nationality = nationName == null ? null : await db.Nationalities
+                .SingleOrDefaultAsync(n => n.NationalityName == nationName);
+            if (nationName != null && nationality == null)
+                throw new ArgumentException("Select a nationality from the list.");
             customer = new Customer {
                 CustomerId = EntityIds.Next(await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3),
                 FullName = form.FullName.Trim(), Phone = form.Phone.Trim(), IdentityNumber = identity,
                 Email = EntityIds.Optional(form.Email), Address = EntityIds.Optional(form.Address),
-                NationalityName = EntityIds.Optional(form.NationalityName)
+                NationalityId = nationality?.NationalityId
             };
         }
         var booking = new Booking {
             BookingId = EntityIds.Next(await db.Bookings.Select(b => b.BookingId).ToListAsync(), "BK", 4),
             Customer = customer, EmployeeId = account.EmployeeId, BookingDate = now,
-            CheckInDate = dto.CheckInDate, CheckOutDate = dto.CheckOutDate, BookingStatus = "CONFIRMED",
-            CheckInDeadlineOverride = dto.CheckInDate == today && now.TimeOfDay >= new TimeSpan(14, 15, 0)
-                ? dto.CheckInDate.ToDateTime(new TimeOnly(23, 59, 59)) : null
+            CheckInDate = dto.CheckInDate, CheckOutDate = dto.CheckOutDate, BookingStatus = "CONFIRMED"
         };
         foreach (var requested in dto.Rooms)
         {
@@ -174,7 +177,14 @@ public class BookingService : IBookingService
         using var db = _createContext();
         await VerifyBookingViewerAsync(db);
         var bookings = await BookingQuery(db).OrderByDescending(b => b.BookingDate).ThenByDescending(b => b.BookingId).ToListAsync();
-        return bookings.Select(ToDto).ToList();
+        var result = bookings.Select(ToDto).ToList();
+        var ids = result.Select(b => b.BookingId).ToList();
+        var openRequests = await db.ServiceRequests.AsNoTracking()
+            .Where(r => ids.Contains(r.BookingId) && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"))
+            .Select(r => r.BookingId).ToListAsync();
+        foreach (var booking in result)
+            booking.OpenServiceRequestCount = openRequests.Count(id => id == booking.BookingId);
+        return result;
     }
     public async Task<BookingDto> GetBookingByIdAsync(string bookingId)
     {
@@ -183,7 +193,10 @@ public class BookingService : IBookingService
         await VerifyBookingViewerAsync(db);
         var booking = await BookingQuery(db).FirstOrDefaultAsync(b => b.BookingId == bookingId)
             ?? throw new InvalidOperationException("Booking no longer exists. Refresh the list.");
-        return ToDto(booking);
+        var result = ToDto(booking);
+        result.OpenServiceRequestCount = await db.ServiceRequests.CountAsync(r => r.BookingId == bookingId
+            && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"));
+        return result;
     }
     private static IQueryable<Booking> BookingQuery(Prn212SbhmsContext db)
         => db.Bookings.AsNoTracking().Where(b => !b.IsDeleted).Include(b => b.Customer).Include(b => b.Employee)
@@ -198,7 +211,7 @@ public class BookingService : IBookingService
             BookingId = b.BookingId, CustomerId = b.CustomerId, CustomerName = b.Customer.FullName,
             CustomerPhone = b.Customer.Phone, EmployeeId = b.EmployeeId, CreatedByEmployeeName = b.Employee.FullName,
             BookingDate = b.BookingDate, CheckInDate = b.CheckInDate, CheckOutDate = b.CheckOutDate,
-            CheckInDeadline = b.CheckInDeadline ?? b.CheckInDeadlineOverride ?? b.CheckInDate.ToDateTime(new TimeOnly(14, 15)),
+            CheckInDeadline = b.CheckInDate.ToDateTime(TimeOnly.MaxValue),
             Status = b.BookingStatus, CancellationReason = b.CancellationReason,
             Rooms = b.BookingDetails.Select(d => new BookingRoomLineDto { RoomTypeId = d.RoomTypeId,
                 TypeName = d.RoomType.TypeName, Quantity = d.Quantity, UnitPrice = d.UnitPrice, NumberOfNights = nights,

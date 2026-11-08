@@ -11,5 +11,7 @@ public partial class CreateBookingView : UserControl
         var vm = new CreateBookingViewModel(); DataContext = vm;
         vm.BackRequested += () => BackRequested?.Invoke();
         vm.BookingCreated += id => BookingCreated?.Invoke(id);
+        // Load the nationality list when this page opens.
+        Loaded += async (_, _) => await vm.ReloadAsync();
     }
 }

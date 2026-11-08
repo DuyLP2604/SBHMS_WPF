@@ -5,64 +5,174 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#CCD8EA"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="16,13"/>
-            <Setter Property="Margin" Value="12,4"/>
+            <Setter Property="Padding" Value="18,15"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Style.Triggers>
-                <Trigger Property="Tag" Value="Selected">
-                    <Setter Property="Background" Value="#355780"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Margin" Value="12,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#294465"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <!-- Selected -->
+                            <Trigger Property="Tag" Value="Selected">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#355780"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="235"/>
+            <ColumnDefinition Width="250"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Border Background="#162A46">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Bottom" Margin="22,15">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" TextWrapping="Wrap"/>
-                    <TextBlock Text="{Binding Role}" Foreground="#91A6C2" Margin="0,4,0,14"/>
-                    <Button Content="Sign out" Click="SignOut_Click" Padding="12,8"/>
+                <StackPanel DockPanel.Dock="Bottom" Margin="23,15,23,25">
+                    <Border Height="1" Background="#35506C" Margin="0,0,0,18"/>
+                    <TextBlock Text="FRONT DESK PORTAL" FontSize="10" FontWeight="SemiBold" Foreground="#91A6C2"/>
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"/>
+                    <TextBlock Text="{Binding Role}" Foreground="#91A6C2" Margin="0,4,0,14" FontSize="11"/>
+                    <Button Content="Sign out" Click="SignOut_Click" Padding="12,8" Style="{StaticResource NavButton}" Background="#294465" Margin="0" HorizontalContentAlignment="Center"/>
                 </StackPanel>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <TextBlock Text="SBHMS" Foreground="White" FontSize="27" FontWeight="Bold" Margin="25,30,10,5"/>
-                        <TextBlock Text="HOTEL MANAGEMENT" Foreground="#91A6C2" FontSize="10" Margin="25,0,10,25"/>
-                        <Button x:Name="CustomerNavButton" Content="Customer profiles" Style="{StaticResource NavButton}" Click="Customer_Click"/>
-                        <Button x:Name="BookingNavButton" Content="Bookings" Style="{StaticResource NavButton}" Click="Bookings_Click" Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}"/>
-                        <Button x:Name="StayNavButton" Content="Guest stays" Style="{StaticResource NavButton}" Click="Stay_Click"/>
-                        <Button x:Name="RoomNavButton" Content="Rooms" Style="{StaticResource NavButton}" Click="Room_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}"/>
-                        <Button x:Name="ServiceRequestNavButton" Content="Service Requests" Style="{StaticResource NavButton}" Click="ServiceRequest_Click" Visibility="{Binding IsStaff, Converter={StaticResource BoolToVisibility}}"/>
-                        <Button x:Name="ServiceAvailabilityNavButton" Content="Service Availability" Style="{StaticResource NavButton}" Click="ServiceAvailability_Click" Visibility="{Binding CanViewServiceAvailability, Converter={StaticResource BoolToVisibility}}"/>
-                        <Button x:Name="FeedbackNavButton" Content="Guest feedback" Style="{StaticResource NavButton}" Click="Feedback_Click"/>
-                        <Button x:Name="InvoiceNavButton" Content="Invoices" Style="{StaticResource NavButton}" Click="Invoice_Click"/>
-                        <Button x:Name="RoomTypeNavButton" Content="Room types" Style="{StaticResource NavButton}" Click="RoomTypes_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}"/>
-                        <Button x:Name="StaffNavButton" Content="Staff accounts" Style="{StaticResource NavButton}" Click="Staff_Click" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibility}}"/>
+                        <!-- Logo -->
+                        <StackPanel Orientation="Horizontal" Margin="25,34,20,32">
+                            <Border Background="#4169E1" CornerRadius="11" Width="43" Height="43">
+                                <TextBlock Text="H" FontSize="24" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Margin="11,2,0,0">
+                                <TextBlock Text="SBHMS" Foreground="White" FontSize="22" FontWeight="Bold"/>
+                                <TextBlock Text="HOTEL MANAGEMENT" Foreground="#91A6C2" FontSize="9" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="WORKSPACE" FontSize="10" Foreground="#8299B6" FontWeight="Bold" Margin="27,0,0,12"/>
+                        <Button x:Name="CustomerNavButton" Style="{StaticResource NavButton}" Click="Customer_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="♟" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Customer profiles" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BookingNavButton" Style="{StaticResource NavButton}" Click="Bookings_Click" Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📅" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Bookings" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="CheckInNavButton" Style="{StaticResource NavButton}" Click="CheckIn_Click"
+                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Check-in" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="CheckOutNavButton" Style="{StaticResource NavButton}" Click="CheckOut_Click"
+                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Check-out" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="StayNavButton" Style="{StaticResource NavButton}" Click="Stay_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🛎️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Guest stays" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="RoomStatusNavButton" Style="{StaticResource NavButton}" Click="RoomStatus_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Room status" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="RoomNavButton" Style="{StaticResource NavButton}" Click="Room_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🛏️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Rooms" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ServiceRequestNavButton" Style="{StaticResource NavButton}" Click="ServiceRequest_Click"
+                                Visibility="{Binding CanManageServiceRequests, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8F3;" FontFamily="Segoe MDL2 Assets" Width="18" Margin="0,0,10,0"/>
+                                <TextBlock Text="Service requests"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ServiceAvailabilityNavButton" Style="{StaticResource NavButton}" Click="ServiceAvailability_Click"
+                                Visibility="{Binding CanViewServiceAvailability, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Width="18" Margin="0,0,10,0"/>
+                                <TextBlock Text="Service availability"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BookingServicesNavButton" Style="{StaticResource NavButton}" Click="BookingServices_Click"
+                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="☕" Width="18" Margin="0,0,10,0"/>
+                                <TextBlock Text="Booking services"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="FeedbackNavButton" Style="{StaticResource NavButton}" Click="Feedback_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✉" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Guest feedback" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="InvoiceNavButton" Style="{StaticResource NavButton}" Click="Invoice_Click" Visibility="{Binding CanViewInvoices, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🧾" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Invoices" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="RevenueNavButton" Style="{StaticResource NavButton}" Click="Revenue_Click" Visibility="{Binding CanManagePricing, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Revenue &amp; pricing" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="RoomTypeNavButton" Style="{StaticResource NavButton}" Click="RoomTypes_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🏷️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Room types" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="StaffNavButton" Style="{StaticResource NavButton}" Click="Staff_Click" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👥" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Staff accounts" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>
         </Border>
         <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Border Background="White" Padding="22,14">
-                <TextBlock Text="{Binding PageTitle}" Foreground="#13233C" FontSize="18" FontWeight="SemiBold"/>
-            </Border>
-            <ContentControl x:Name="PageHost" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+            <Grid>
+                <ContentControl x:Name="PageHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                <Border x:Name="ToastBorder" Width="320" MaxWidth="320" Padding="16" CornerRadius="12" Background="#E8F7EF" BorderBrush="#D0ECDD" BorderThickness="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,25,0" Panel.ZIndex="100" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#344766" BlurRadius="18" ShadowDepth="3" Opacity="0.15"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <TextBlock x:Name="ToastTitle" Text="Success" FontSize="14" FontWeight="Bold" Foreground="#15875A" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="ToastMessage" Text="Operation completed!" TextWrapping="Wrap" FontSize="12" Foreground="#344766"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
-        <Border x:Name="ToastBorder" Grid.ColumnSpan="2" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="20" Padding="18" CornerRadius="10" Panel.ZIndex="10" MaxWidth="420">
-            <StackPanel>
-                <TextBlock x:Name="ToastTitle" FontWeight="Bold"/>
-                <TextBlock x:Name="ToastMessage" TextWrapping="Wrap"/>
-            </StackPanel>
-        </Border>
     </Grid>
 </Window>

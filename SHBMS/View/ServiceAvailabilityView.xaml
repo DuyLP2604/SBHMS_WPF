@@ -1,9 +1,14 @@
-﻿<UserControl x:Class="SHBMS.View.ServiceAvailabilityView"
+<UserControl x:Class="SHBMS.View.ServiceAvailabilityView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="#F3F6FB"
     FontFamily="Segoe UI">
 
+    <UserControl.Style>
+        <Style TargetType="UserControl"><Style.Triggers>
+            <DataTrigger Binding="{Binding IsBusy}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+        </Style.Triggers></Style>
+    </UserControl.Style>
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -36,11 +41,7 @@
                     Foreground="#718096"
                     Margin="0,4,0,0"/>
 
-                <TextBlock Text="{Binding StatusMessage}"
-                           Foreground="#B45309"
-                           FontSize="12"
-                           Margin="0,4,0,0"
-                           TextWrapping="Wrap"/>
+
             </StackPanel>
         </Grid>
 

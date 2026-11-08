@@ -9,35 +9,45 @@ public partial class MainWindow : Window
     private readonly Dictionary<string, UserControl> _pages = new();
     public MainWindow()
     {
-        InitializeComponent(); DataContext = _vm;
-        Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
+        InitializeComponent();
+
+        // Initialize before creating or loading any page.
+        ToastService.Initialize(
+            ToastBorder,
+            ToastTitle,
+            ToastMessage);
+
+        DataContext = _vm;
+
+        Navigate(
+            "Customers",
+            "Customer profiles",
+            CustomerNavButton,
+            () => new CustomerProfilesView());
+
     }
     // Navigation is view behavior. Each page owns its own data ViewModel.
     // Create pages on demand so opening the shell does not query every database table.
     private void Navigate(string key, string title, Button button, Func<UserControl> create)
     {
-        if ((key == "Rooms" || key == "RoomTypes") && !_vm.CanViewRooms) return;
-        if (key == "Bookings" && !_vm.CanViewBookings) return;
-        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton, ServiceAvailabilityNavButton,
-            FeedbackNavButton, InvoiceNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
+        if ((key == "Rooms" || key == "RoomTypes" || key == "RoomStatus") && !_vm.CanViewRooms) return;
+        if ((key == "Bookings" || key == "CheckIn" || key == "CheckOut" || key == "BookingServices") && !_vm.CanViewBookings) return;
+        if (key == "Invoices" && !_vm.CanViewInvoices) return;
+        if (key == "Revenue" && !_vm.CanManagePricing) return;
+        if (key == "ServiceRequests" && !_vm.CanManageServiceRequests) return;
+        if (key == "ServiceAvailability" && !_vm.CanViewServiceAvailability) return;
+        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton,
+            StayNavButton, RoomStatusNavButton, RoomNavButton, ServiceRequestNavButton, ServiceAvailabilityNavButton,
+            BookingServicesNavButton, FeedbackNavButton, InvoiceNavButton, RevenueNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
         button.Tag = "Selected";
         if (!_pages.TryGetValue(key, out var page)) { page = create(); _pages.Add(key, page); }
         PageHost.Content = page; _vm.PageTitle = title;
-
-        if (key == "ServiceRequests" &&
-            !Session.CanManageServiceRequests)
-
-            if (key == "ServiceAvailability" &&
-                !_vm.CanViewServiceAvailability) return;
-
-        {
-            return;
-        }
 
     }
     private void Customer_Click(object sender, RoutedEventArgs e) => Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
     private void Feedback_Click(object sender, RoutedEventArgs e) => Navigate("Feedback", "Guest feedback", FeedbackNavButton, () => new GuestFeedbackView());
     private void Invoice_Click(object sender, RoutedEventArgs e) => Navigate("Invoices", "Invoices", InvoiceNavButton, () => new InvoiceManager());
+    private void Revenue_Click(object sender, RoutedEventArgs e) => Navigate("Revenue", "Revenue & pricing", RevenueNavButton, () => new RevenueManagementPage());
     private void Bookings_Click(object sender, RoutedEventArgs e) => ShowBookings();
     private void ShowBookings(string? createdId = null)
     {
@@ -60,7 +70,13 @@ public partial class MainWindow : Window
         page.BookingCreated += id => ShowBookings(id);
         PageHost.Content = page; _vm.PageTitle = "New booking";
     }
+    private void CheckIn_Click(object sender, RoutedEventArgs e)
+        => Navigate("CheckIn", "Check-in", CheckInNavButton, () => new CheckInView());
+    private void CheckOut_Click(object sender, RoutedEventArgs e)
+        => Navigate("CheckOut", "Check-out", CheckOutNavButton, () => new CheckOutView());
     private void Stay_Click(object sender, RoutedEventArgs e) => Navigate("Stays", "Guest stays", StayNavButton, () => new GuestStayView());
+    private void RoomStatus_Click(object sender, RoutedEventArgs e)
+        => Navigate("RoomStatus", "Room status", RoomStatusNavButton, () => new RoomStatusView());
     private void Room_Click(object sender, RoutedEventArgs e) => Navigate("Rooms", "Rooms", RoomNavButton, () => new RoomsView());
 
 
@@ -79,6 +95,9 @@ public partial class MainWindow : Window
         Navigate("ServiceAvailability", "Service Availability", ServiceAvailabilityNavButton, () => new ServiceAvailabilityView());
     }
 
+
+    private void BookingServices_Click(object sender, RoutedEventArgs e)
+        => Navigate("BookingServices", "Booking services", BookingServicesNavButton, () => new BookingServicesView());
 
     private void RoomTypes_Click(object sender, RoutedEventArgs e)
         => Navigate("RoomTypes", "Room types", RoomTypeNavButton, () => new RoomTypesView());

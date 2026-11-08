@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -31,6 +31,8 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<Invoice> Invoices { get; set; }
 
+    public virtual DbSet<Nationality> Nationalities { get; set; }
+
     public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<Paymentmethod> Paymentmethods { get; set; }
@@ -62,13 +64,14 @@ public partial class Prn212SbhmsContext : DbContext
             .AddJsonFile("appsettings.json", true, true)
             .Build();
         var connectionstring = configuration["ConnectionStrings:DefaultConnection"];
-        return connectionstring;
+        return connectionstring ?? throw new InvalidOperationException("DefaultConnection is missing from appsettings.json.");
     }
 
     //Override lại phương thức OnConfiguring để thiết lập kết nối cho CSDL
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer(GetConnectionString());
+        if (!optionsBuilder.IsConfigured)
+            optionsBuilder.UseSqlServer(GetConnectionString());
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -97,6 +100,11 @@ public partial class Prn212SbhmsContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .IsRequired();
+
+            entity.Property(e => e.Quantity).HasDefaultValue(1);
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.BilledAt).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.BookingId, e.RequestStatus }, "IX_SERVICE_REQUEST_Booking_Status");
 
             entity.Property(e => e.RequestDescription)
                 .HasMaxLength(500)
@@ -159,7 +167,7 @@ public partial class Prn212SbhmsContext : DbContext
             entity.Property(e => e.CancellationReason).HasMaxLength(200);
             entity.Property(e => e.CheckInDeadline)
                 .HasPrecision(0)
-                .HasComputedColumnSql("(isnull([CheckInDeadlineOverride],dateadd(minute,(855),CONVERT([datetime2](0),[CheckInDate]))))", true);
+                .HasComputedColumnSql("(dateadd(second,(-1),dateadd(day,(1),CONVERT([datetime2](0),[CheckInDate]))))", true);
             entity.Property(e => e.CheckInDeadlineOverride).HasPrecision(0);
             entity.Property(e => e.CustomerId)
                 .HasMaxLength(6)
@@ -287,7 +295,7 @@ public partial class Prn212SbhmsContext : DbContext
                 .IsFixedLength();
             entity.Property(e => e.Status)
                 .HasMaxLength(30)
-                .HasDefaultValue("Chưa xử lý");
+                .HasDefaultValue("Pending");
             entity.Property(e => e.Title)
                 .HasMaxLength(200)
                 .HasDefaultValue("Phản hồi khách hàng");
@@ -309,6 +317,8 @@ public partial class Prn212SbhmsContext : DbContext
         {
             entity.ToTable("CUSTOMER");
 
+            entity.HasIndex(e => e.NationalityId, "IX_CUSTOMER_NationalityID");
+
             entity.HasIndex(e => e.IdentityNumber, "UX_CUSTOMER_Identity_NotNull")
                 .IsUnique()
                 .HasFilter("([IdentityNumber] IS NOT NULL)");
@@ -326,10 +336,18 @@ public partial class Prn212SbhmsContext : DbContext
             entity.Property(e => e.IdentityNumber)
                 .HasMaxLength(20)
                 .IsUnicode(false);
-            entity.Property(e => e.NationalityName).HasMaxLength(50);
+            entity.Property(e => e.NationalityId)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("NationalityID");
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.Nationality).WithMany(p => p.Customers)
+                .HasForeignKey(d => d.NationalityId)
+                .HasConstraintName("FK_CUSTOMER_NATIONALITY");
         });
 
         modelBuilder.Entity<Employee>(entity =>
@@ -391,6 +409,20 @@ public partial class Prn212SbhmsContext : DbContext
             entity.HasOne(d => d.Employee).WithMany(p => p.Invoices)
                 .HasForeignKey(d => d.EmployeeId)
                 .HasConstraintName("FK_INVOICE_EMPLOYEE");
+        });
+
+        modelBuilder.Entity<Nationality>(entity =>
+        {
+            entity.ToTable("NATIONALITY");
+
+            entity.HasIndex(e => e.NationalityName, "UQ_NATIONALITY_Name").IsUnique();
+
+            entity.Property(e => e.NationalityId)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("NationalityID");
+            entity.Property(e => e.NationalityName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Payment>(entity =>

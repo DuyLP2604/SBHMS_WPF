@@ -12,7 +12,14 @@ public class BookingDto
     public DateOnly CheckOutDate { get; set; }
     public DateTime? CheckInDeadline { get; set; }
     public string Status { get; set; } = "";
+    public int OpenServiceRequestCount { get; set; }
     public string? CancellationReason { get; set; }
+    // Check-in is allowed for the entire arrival date, regardless of the time.
+    public bool IsCheckInOverdue => Status == "CONFIRMED"
+        && CheckInDate < DateOnly.FromDateTime(DateTime.Today);
+    public bool CanCheckIn => Status == "CONFIRMED"
+        && CheckInDate == DateOnly.FromDateTime(DateTime.Today)
+        && CheckOutDate > DateOnly.FromDateTime(DateTime.Today);
     public int NumberOfNights => CheckOutDate.DayNumber - CheckInDate.DayNumber;
     public int TotalRooms => Rooms.Sum(r => r.Quantity);
     public decimal RoomSubtotal => Rooms.Sum(r => r.LineTotal);

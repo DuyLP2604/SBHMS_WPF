@@ -1,4 +1,4 @@
-﻿
+
 using SHBMS.DTO.Service;
 using SHBMS.Helper;
 using SHBMS.Service.Implementation;
@@ -196,7 +196,8 @@ public class ServiceAvailabilityViewModel : DatabaseViewModel
         bool updated = await _service.UpdateAvailabilityAsync(
             serviceId,
             SelectedAvailability,
-            stockQuantity
+            stockQuantity,
+            SelectedService
         );
 
         if (!updated)

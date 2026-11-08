@@ -7,33 +7,16 @@ namespace SHBMS.DTO.Invoice;
 
 public class InvoiceDto
 {
-    public string InvoiceId { get; set; } = "";
-    public string StayId { get; set; } = "";
-
-    public string CustomerName { get; set; } = "";
-    public string RoomNumber { get; set; } = "";
-
-    public decimal RoomCharge { get; set; }
-    public decimal ServiceCharge { get; set; }
-    public decimal DiscountAmount { get; set; }
-    public decimal TotalAmount { get; set; }
-    public DateTime CreatedDate { get; set; }
-    public bool IsPaid { get; set; }
-
-    public DateTime CheckInDate { get; set; }
-    public DateTime CheckOutDate { get; set; }
-
-    public List<ServiceOrderDto> ServiceOrders { get; set; } = new List<ServiceOrderDto>();
-
-    public string DisplayService
-    {
-        get
-        {
-            if (ServiceOrders != null && ServiceOrders.Count > 0)
-            {
-                return string.Join(", ", ServiceOrders.Select(s => s.ServiceName));
-            }
-            return "-";
-        }
-    }
+    public string InvoiceId { get; set; }
+    public string BookingId { get; set; }
+    public string StayId { get; set; }
+    public string CustomerName { get; set; }
+    public string RoomNumber { get; set; }
+    public string EmployeeId { get; set; }
+    public string TotalAmount { get; set; }
+    public string Rooms { get; set; }
+    public string Services { get; set; }
+    public DateOnly CheckinDate { get; set; }
+    public DateOnly CheckoutDate { get; set; }
+    public DateTime InvoiceDate { get; set; }
 }

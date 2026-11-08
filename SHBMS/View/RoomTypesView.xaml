@@ -27,7 +27,6 @@
             <TextBlock Text="Room types" Foreground="{StaticResource Navy}" FontSize="25" FontWeight="Bold"/>
             <TextBlock Text="Manage room categories, capacity and nightly prices." Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextWrapping="Wrap"/>
             <TextBlock Text="{Binding AccessHint}" Foreground="{StaticResource Accent}" FontSize="12" Margin="0,4,0,0"/>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,5,0,0"/>
         </StackPanel>
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,12">
             <Grid>
