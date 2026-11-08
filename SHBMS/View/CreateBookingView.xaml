@@ -85,11 +85,11 @@
                         <WrapPanel>
                             <StackPanel Margin="0,0,8,8">
                                 <TextBlock Text="CHECK-IN" Style="{StaticResource FieldLabel}"/>
-                                <DatePicker SelectedDate="{Binding CheckInDate, Mode=TwoWay}" DisplayDateStart="{Binding Today}" Width="170" Height="36"/>
+                                <DatePicker SelectedDate="{Binding CheckInDate, Mode=TwoWay}" DisplayDateStart="{Binding Today, Mode=OneWay}" Width="170" Height="36"/>
                             </StackPanel>
                             <StackPanel Margin="0,0,8,8">
                                 <TextBlock Text="CHECK-OUT" Style="{StaticResource FieldLabel}"/>
-                                <DatePicker SelectedDate="{Binding CheckOutDate, Mode=TwoWay}" DisplayDateStart="{Binding Today}" Width="170" Height="36"/>
+                                <DatePicker SelectedDate="{Binding CheckOutDate, Mode=TwoWay}" DisplayDateStart="{Binding Today, Mode=OneWay}" Width="170" Height="36"/>
                             </StackPanel>
                             <StackPanel VerticalAlignment="Bottom" Margin="0,0,0,8">
                                 <Button Content="Search available rooms" Command="{Binding SearchRoomsCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8"/>
