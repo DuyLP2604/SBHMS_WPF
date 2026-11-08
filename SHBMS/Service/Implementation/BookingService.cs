@@ -177,7 +177,14 @@ public class BookingService : IBookingService
         using var db = _createContext();
         await VerifyBookingViewerAsync(db);
         var bookings = await BookingQuery(db).OrderByDescending(b => b.BookingDate).ThenByDescending(b => b.BookingId).ToListAsync();
-        return bookings.Select(ToDto).ToList();
+        var result = bookings.Select(ToDto).ToList();
+        var ids = result.Select(b => b.BookingId).ToList();
+        var openRequests = await db.ServiceRequests.AsNoTracking()
+            .Where(r => ids.Contains(r.BookingId) && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"))
+            .Select(r => r.BookingId).ToListAsync();
+        foreach (var booking in result)
+            booking.OpenServiceRequestCount = openRequests.Count(id => id == booking.BookingId);
+        return result;
     }
     public async Task<BookingDto> GetBookingByIdAsync(string bookingId)
     {
@@ -186,7 +193,10 @@ public class BookingService : IBookingService
         await VerifyBookingViewerAsync(db);
         var booking = await BookingQuery(db).FirstOrDefaultAsync(b => b.BookingId == bookingId)
             ?? throw new InvalidOperationException("Booking no longer exists. Refresh the list.");
-        return ToDto(booking);
+        var result = ToDto(booking);
+        result.OpenServiceRequestCount = await db.ServiceRequests.CountAsync(r => r.BookingId == bookingId
+            && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"));
+        return result;
     }
     private static IQueryable<Booking> BookingQuery(Prn212SbhmsContext db)
         => db.Bookings.AsNoTracking().Where(b => !b.IsDeleted).Include(b => b.Customer).Include(b => b.Employee)

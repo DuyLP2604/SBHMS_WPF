@@ -124,8 +124,11 @@ BEGIN TRY
         ServiceID CHAR(4) NOT NULL,
         ServiceName NVARCHAR(60) NOT NULL,
         UnitPrice DECIMAL(12,2) NOT NULL,
+        IsAvailable BIT NOT NULL CONSTRAINT DF_SERVICE_IsAvailable DEFAULT (1),
+        StockQuantity INT NULL,
 
-        CONSTRAINT PK_SERVICE PRIMARY KEY (ServiceID)
+        CONSTRAINT PK_SERVICE PRIMARY KEY (ServiceID),
+        CONSTRAINT CK_SERVICE_StockQuantity CHECK (StockQuantity IS NULL OR StockQuantity >= 0)
     );
 
     CREATE TABLE dbo.BOOKING (
@@ -212,6 +215,29 @@ BEGIN TRY
         CONSTRAINT FK_B_SERVICE_EMP FOREIGN KEY (OrderedByEmployee) REFERENCES dbo.EMPLOYEE(EmployeeID)
     );
 
+    CREATE TABLE dbo.SERVICE_REQUEST (
+        RequestID INT IDENTITY(1,1) NOT NULL,
+        BookingID CHAR(6) NOT NULL,
+        ServiceID CHAR(4) NOT NULL,
+        RequestDescription NVARCHAR(500) NOT NULL,
+        RequestStatus VARCHAR(20) NOT NULL CONSTRAINT DF_SERVICE_REQUEST_Status DEFAULT 'Pending',
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_SERVICE_REQUEST_CreatedAt DEFAULT SYSDATETIME(),
+        ResolvedAt DATETIME2 NULL,
+        HandledByEmployeeID CHAR(6) NULL,
+        Quantity INT NOT NULL CONSTRAINT DF_SERVICE_REQUEST_Quantity DEFAULT 1,
+        UnitPrice DECIMAL(12,2) NOT NULL,
+        BilledAt DATETIME2 NULL,
+        CONSTRAINT PK_SERVICE_REQUEST PRIMARY KEY (RequestID),
+        CONSTRAINT FK_ServiceRequest_Booking FOREIGN KEY (BookingID) REFERENCES dbo.BOOKING(BookingID),
+        CONSTRAINT FK_ServiceRequest_Service FOREIGN KEY (ServiceID) REFERENCES dbo.SERVICE(ServiceID),
+        CONSTRAINT FK_ServiceRequest_Employee FOREIGN KEY (HandledByEmployeeID) REFERENCES dbo.EMPLOYEE(EmployeeID),
+        CONSTRAINT CK_ServiceRequest_Status CHECK (RequestStatus IN ('Pending','InProgress','Resolved','Rejected')),
+        CONSTRAINT CK_SERVICE_REQUEST_Quantity CHECK (Quantity > 0),
+        CONSTRAINT CK_SERVICE_REQUEST_UnitPrice CHECK (UnitPrice >= 0),
+        CONSTRAINT CK_SERVICE_REQUEST_Billed CHECK (BilledAt IS NULL OR
+            (RequestStatus = 'Resolved' AND ResolvedAt IS NOT NULL AND HandledByEmployeeID IS NOT NULL))
+    );
+
     CREATE TABLE dbo.PAYMENTMETHOD (
         MethodID CHAR(4) NOT NULL,
         MethodName NVARCHAR(30) NOT NULL,
@@ -277,6 +303,7 @@ BEGIN TRY
     CREATE INDEX IX_ROOM_RoomType_Status ON dbo.ROOM(RoomTypeID, Status);
 
     CREATE INDEX IX_CUSTOMER_NationalityID ON dbo.CUSTOMER(NationalityID);
+    CREATE INDEX IX_SERVICE_REQUEST_Booking_Status ON dbo.SERVICE_REQUEST(BookingID, RequestStatus);
 
     -- =============================================================
     -- PHẦN 2. INSERT INTO - DỮ LIỆU MẪU

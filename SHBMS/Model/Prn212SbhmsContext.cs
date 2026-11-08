@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -53,6 +53,9 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<VwRoomList> VwRoomLists { get; set; }
 
+    public virtual DbSet<ServiceRequest> ServiceRequests { get; set; }
+
+
     //Tạo phương thức lấy chuỗi kết nối từ file appsettings.json
     private string GetConnectionString()
     {
@@ -61,17 +64,86 @@ public partial class Prn212SbhmsContext : DbContext
             .AddJsonFile("appsettings.json", true, true)
             .Build();
         var connectionstring = configuration["ConnectionStrings:DefaultConnection"];
-        return connectionstring;
+        return connectionstring ?? throw new InvalidOperationException("DefaultConnection is missing from appsettings.json.");
     }
 
     //Override lại phương thức OnConfiguring để thiết lập kết nối cho CSDL
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer(GetConnectionString());
+        if (!optionsBuilder.IsConfigured)
+            optionsBuilder.UseSqlServer(GetConnectionString());
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+        modelBuilder.Entity<ServiceRequest>(entity =>
+        {
+            entity.ToTable("SERVICE_REQUEST");
+
+            entity.HasKey(e => e.RequestId);
+
+            entity.Property(e => e.RequestId)
+                .HasColumnName("RequestID")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(e => e.BookingId)
+                .HasColumnName("BookingID")
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .IsRequired();
+
+            entity.Property(e => e.ServiceId)
+                .HasColumnName("ServiceID")
+                .HasMaxLength(4)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .IsRequired();
+
+            entity.Property(e => e.Quantity).HasDefaultValue(1);
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.BilledAt).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.BookingId, e.RequestStatus }, "IX_SERVICE_REQUEST_Booking_Status");
+
+            entity.Property(e => e.RequestDescription)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(e => e.RequestStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Pending");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSDATETIME()");
+
+            entity.Property(e => e.ResolvedAt)
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.HandledByEmployeeId)
+                .HasColumnName("HandledByEmployeeID")
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .IsFixedLength();
+
+            entity.HasOne<Booking>()
+                .WithMany()
+                .HasForeignKey(e => e.BookingId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne<Service>()
+                .WithMany()
+                .HasForeignKey(e => e.ServiceId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne<Employee>()
+                .WithMany()
+                .HasForeignKey(e => e.HandledByEmployeeId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
         modelBuilder.Entity<Booking>(entity =>
         {
             entity.ToTable("BOOKING", tb => tb.HasTrigger("trg_BOOKING_BlockPhysicalDelete"));
@@ -507,7 +579,12 @@ public partial class Prn212SbhmsContext : DbContext
                 .HasColumnName("ServiceID");
             entity.Property(e => e.ServiceName).HasMaxLength(60);
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.IsAvailable)
+        .HasDefaultValue(true);
+
+            entity.Property(e => e.StockQuantity);
         });
+
 
         modelBuilder.Entity<User>(entity =>
         {

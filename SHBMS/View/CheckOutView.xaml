@@ -54,6 +54,7 @@
             <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <TextBlock Text="Checkout details" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock Text="{Binding ServiceRequestHint}" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,8,0,4"/>
                     <WrapPanel Margin="0,8,0,6">
                         <TextBlock Text="{Binding SelectedBooking.BookingId}" FontWeight="SemiBold" Margin="0,0,16,0"/>
                         <TextBlock Text="{Binding SelectedBooking.CustomerName}"/>

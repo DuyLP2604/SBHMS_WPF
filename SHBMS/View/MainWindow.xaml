@@ -105,10 +105,25 @@
                                 <TextBlock Text="Rooms" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="ServiceRequestNavButton" Style="{StaticResource NavButton}" Click="ServiceRequest_Click">
+                        <Button x:Name="ServiceRequestNavButton" Style="{StaticResource NavButton}" Click="ServiceRequest_Click"
+                                Visibility="{Binding CanManageServiceRequests, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="☕" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
-                                <TextBlock Text="Booking services" VerticalAlignment="Center"/>
+                                <TextBlock Text="&#xE8F3;" FontFamily="Segoe MDL2 Assets" Width="18" Margin="0,0,10,0"/>
+                                <TextBlock Text="Service requests"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ServiceAvailabilityNavButton" Style="{StaticResource NavButton}" Click="ServiceAvailability_Click"
+                                Visibility="{Binding CanViewServiceAvailability, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Width="18" Margin="0,0,10,0"/>
+                                <TextBlock Text="Service availability"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BookingServicesNavButton" Style="{StaticResource NavButton}" Click="BookingServices_Click"
+                                Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="☕" Width="18" Margin="0,0,10,0"/>
+                                <TextBlock Text="Booking services"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="FeedbackNavButton" Style="{StaticResource NavButton}" Click="Feedback_Click">
