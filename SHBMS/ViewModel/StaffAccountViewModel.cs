@@ -171,9 +171,10 @@ public class StaffAccountViewModel : DatabaseViewModel
             // Xử lý đổi password nếu admin gõ vào ô password
             if (success && NewPassword.Length >= 6)
             {
-                // Gọi thêm Service đổi mật khẩu nếu cần (Đã triển khai UpdatePasswordAsync phía trên)
-                // await _service.UpdatePasswordAsync(SelectedAccount.UserId, NewPassword);
+                success = await _service.UpdatePasswordAsync(SelectedAccount!.UserId, NewPassword);
+                if (!success) StatusMessage = "Account updated, but the password could not be changed.";
             }
+
         }
 
         if (success)
