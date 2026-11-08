@@ -104,14 +104,13 @@ public class GuestFeedbackViewModel : DatabaseViewModel
         }
         if (resolve)
         {
-            feedback.Status = "Đã xử lý";
+            feedback.Status = "Resolved";
             feedback.ReplyMessage = reply.Trim();
             feedback.ResolvedByEmployee = employeeId;
         }
         else
         {
-            // Pending changes the status, preserving the stored reply as in the old UI.
-            feedback.Status = "Chưa xử lý";
+            feedback.Status = "Pending";
             feedback.ResolvedByEmployee = null;
         }
         await db.SaveChangesAsync();
