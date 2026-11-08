@@ -16,7 +16,7 @@ public class InvoiceDto
     public string TotalAmount { get; set; }
     public string Rooms { get; set; }
     public string Services { get; set; }
-    public DateTime CheckinDate { get; set; }
-    public DateTime CheckoutDate { get; set; }
+    public DateOnly CheckinDate { get; set; }
+    public DateOnly CheckoutDate { get; set; }
     public DateTime InvoiceDate { get; set; }
 }

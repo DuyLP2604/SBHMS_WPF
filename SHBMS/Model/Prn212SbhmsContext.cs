@@ -1,8 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using Microsoft.EntityFrameworkCore;
 
 namespace SHBMS.Model;
 
@@ -27,11 +25,11 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<Customer> Customers { get; set; }
 
-    public virtual DbSet<Nationality> Nationalities { get; set; }
-
     public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<Invoice> Invoices { get; set; }
+
+    public virtual DbSet<Nationality> Nationalities { get; set; }
 
     public virtual DbSet<Payment> Payments { get; set; }
 
@@ -53,22 +51,9 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<VwRoomList> VwRoomLists { get; set; }
 
-    //Tạo phương thức lấy chuỗi kết nối từ file appsettings.json
-    private string GetConnectionString()
-    {
-        IConfiguration configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", true, true)
-            .Build();
-        var connectionstring = configuration["ConnectionStrings:DefaultConnection"];
-        return connectionstring;
-    }
-
-    //Override lại phương thức OnConfiguring để thiết lập kết nối cho CSDL
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer(GetConnectionString());
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=GIAHAN;Database=PRN212_SBHMS;Integrated Security=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -223,7 +208,7 @@ public partial class Prn212SbhmsContext : DbContext
                 .IsFixedLength();
             entity.Property(e => e.Status)
                 .HasMaxLength(30)
-                .HasDefaultValue("Chưa xử lý");
+                .HasDefaultValue("Pending");
             entity.Property(e => e.Title)
                 .HasMaxLength(200)
                 .HasDefaultValue("Phản hồi khách hàng");
@@ -244,6 +229,8 @@ public partial class Prn212SbhmsContext : DbContext
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.ToTable("CUSTOMER");
+
+            entity.HasIndex(e => e.NationalityId, "IX_CUSTOMER_NationalityID");
 
             entity.HasIndex(e => e.IdentityNumber, "UX_CUSTOMER_Identity_NotNull")
                 .IsUnique()
@@ -267,25 +254,13 @@ public partial class Prn212SbhmsContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("NationalityID");
-            entity.HasIndex(e => e.NationalityId, "IX_CUSTOMER_NationalityID");
-            entity.HasOne(d => d.Nationality).WithMany(p => p.Customers)
-                .HasForeignKey(d => d.NationalityId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_CUSTOMER_NATIONALITY");
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .IsUnicode(false);
-        });
 
-        modelBuilder.Entity<Nationality>(entity =>
-        {
-            entity.ToTable("NATIONALITY");
-            entity.HasKey(e => e.NationalityId);
-            entity.Property(e => e.NationalityId)
-                .HasMaxLength(3).IsUnicode(false).IsFixedLength()
-                .HasColumnName("NationalityID");
-            entity.Property(e => e.NationalityName).HasMaxLength(50).IsRequired();
-            entity.HasIndex(e => e.NationalityName, "UQ_NATIONALITY_Name").IsUnique();
+            entity.HasOne(d => d.Nationality).WithMany(p => p.Customers)
+                .HasForeignKey(d => d.NationalityId)
+                .HasConstraintName("FK_CUSTOMER_NATIONALITY");
         });
 
         modelBuilder.Entity<Employee>(entity =>
@@ -347,6 +322,20 @@ public partial class Prn212SbhmsContext : DbContext
             entity.HasOne(d => d.Employee).WithMany(p => p.Invoices)
                 .HasForeignKey(d => d.EmployeeId)
                 .HasConstraintName("FK_INVOICE_EMPLOYEE");
+        });
+
+        modelBuilder.Entity<Nationality>(entity =>
+        {
+            entity.ToTable("NATIONALITY");
+
+            entity.HasIndex(e => e.NationalityName, "UQ_NATIONALITY_Name").IsUnique();
+
+            entity.Property(e => e.NationalityId)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("NationalityID");
+            entity.Property(e => e.NationalityName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Payment>(entity =>

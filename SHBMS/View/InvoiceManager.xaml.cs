@@ -11,7 +11,6 @@ public partial class InvoiceManager : UserControl
         var viewModel = new ViewModel.InvoiceViewModel();
         DataContext = viewModel;
 
-        // Gọi load dữ liệu sau khi View đã vẽ xong
         this.Loaded += (s, e) =>
         {
             viewModel.ReloadAsync();

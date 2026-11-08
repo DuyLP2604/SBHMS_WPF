@@ -67,8 +67,6 @@ public class InvoiceViewModel : DatabaseViewModel
 
     public InvoiceViewModel()
     {
-        selectedItem = new InvoiceDto();
-
         SearchCmd = DatabaseCommand(LoadDataAsync);
         // Refresh command clears the search text and reloads data
         RefreshCmd = DatabaseCommand(async () => { searchtext = ""; OnPropertyChanged(nameof(searchtext)); await LoadDataAsync(); });

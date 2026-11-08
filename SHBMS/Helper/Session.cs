@@ -12,6 +12,8 @@ public static class Session
     public static bool CanViewRooms => CurrentAccount?.Role is "Staff" or "Manager";
     public static bool CanViewBookings => CurrentAccount?.Role is "Staff" or "Manager";
 
+    public static bool CanViewInvoices => CurrentAccount?.Role is "Staff" or "Manager";
+
     public static string? GetRole() => CurrentAccount?.Role;
 
     public static void SetAccount(AccountDto account) => CurrentAccount = account;
