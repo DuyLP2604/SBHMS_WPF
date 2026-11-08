@@ -1,78 +1,161 @@
-<UserControl x:Class="SHBMS.View.CheckOutView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="{DynamicResource Bg}" FontFamily="Segoe UI">
+<UserControl
+    x:Class="SHBMS.View.CheckOutView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{DynamicResource Bg}"
+    FontFamily="Segoe UI">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ModernStyles.xaml"/>
+                <ResourceDictionary Source="ModernStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         </ResourceDictionary>
     </UserControl.Resources>
     <UserControl.Style>
         <Style TargetType="UserControl">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="IsEnabled" Value="False" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
     </UserControl.Style>
     <Grid Margin="20,14">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*" MinHeight="140"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="140" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel Margin="0,0,0,12">
-            <TextBlock Text="Check-out" FontSize="25" FontWeight="Bold" Foreground="{StaticResource Navy}"/>
-            <TextBlock Text="Checked-in bookings. Review charges and payments before checking out."
-                       Foreground="{StaticResource Muted}" Margin="0,4,0,10" TextWrapping="Wrap"/>
+            <TextBlock
+                Text="Check-out"
+                FontSize="25"
+                FontWeight="Bold"
+                Foreground="{StaticResource Navy}" />
+            <TextBlock
+                Text="Checked-in bookings. Review charges and payments before checking out."
+                Foreground="{StaticResource Muted}"
+                Margin="0,4,0,10"
+                TextWrapping="Wrap" />
             <DockPanel>
-                <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}"
-                        Style="{StaticResource SecondaryButton}" Margin="8,0,0,0"/>
-                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         ToolTip="Search by booking ID, customer name, phone or room number"/>
+                <Button
+                    DockPanel.Dock="Right"
+                    Content="Refresh"
+                    Command="{Binding RefreshCommand}"
+                    Style="{StaticResource SecondaryButton}"
+                    Margin="8,0,0,0" />
+                <TextBox
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                    ToolTip="Search by booking ID, customer name, phone or room number" />
             </DockPanel>
-            <TextBlock Text="{Binding Summary}" Foreground="{StaticResource Muted}" Margin="0,6,0,0"/>
+            <TextBlock
+                Text="{Binding Summary}"
+                Foreground="{StaticResource Muted}"
+                Margin="0,6,0,0" />
         </StackPanel>
-        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="8">
-            <DataGrid ItemsSource="{Binding BookingsView}" SelectedItem="{Binding SelectedBooking, Mode=TwoWay}"
-                      CanUserDeleteRows="False">
+        <Border
+            Grid.Row="1"
+            Style="{StaticResource Card}"
+            Padding="8">
+            <DataGrid
+                ItemsSource="{Binding BookingsView}"
+                SelectedItem="{Binding SelectedBooking, Mode=TwoWay}"
+                CanUserDeleteRows="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="BOOKING" Binding="{Binding BookingId}" Width="100"/>
-                    <DataGridTextColumn Header="CUSTOMER" Binding="{Binding CustomerName}" Width="*" MinWidth="130"/>
-                    <DataGridTextColumn Header="DEPARTURE" Binding="{Binding CheckOutDate, StringFormat=dd/MM/yyyy}" Width="115"/>
-                    <DataGridTextColumn Header="TOTAL (VND)" Binding="{Binding TotalAmount, StringFormat=N0}" Width="145"/>
-                    <DataGridTextColumn Header="PAID (VND)" Binding="{Binding PaidAmount, StringFormat=N0}" Width="135"/>
+                    <DataGridTextColumn
+                        Header="BOOKING"
+                        Binding="{Binding BookingId}"
+                        Width="100" />
+                    <DataGridTextColumn
+                        Header="CUSTOMER"
+                        Binding="{Binding CustomerName}"
+                        Width="*"
+                        MinWidth="130" />
+                    <DataGridTextColumn
+                        Header="DEPARTURE"
+                        Binding="{Binding CheckOutDate, StringFormat=dd/MM/yyyy}"
+                        Width="115" />
+                    <DataGridTextColumn
+                        Header="TOTAL (VND)"
+                        Binding="{Binding TotalAmount, StringFormat=N0}"
+                        Width="145" />
+                    <DataGridTextColumn
+                        Header="PAID (VND)"
+                        Binding="{Binding PaidAmount, StringFormat=N0}"
+                        Width="135" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
-        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0"
-                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+        <Border
+            Grid.Row="2"
+            Style="{StaticResource Card}"
+            Padding="16"
+            Margin="0,12,0,0"
+            Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
             <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock Text="Checkout details" Style="{StaticResource SectionTitle}"/>
-                    <TextBlock Text="{Binding ServiceRequestHint}" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,8,0,4"/>
+                    <TextBlock Text="Checkout details" Style="{StaticResource SectionTitle}" />
+                    <!-- Unfinished orders are shown as a hint and are rejected without a charge at checkout. -->
+                    <TextBlock
+                        Text="{Binding ServiceRequestHint}"
+                        TextWrapping="Wrap"
+                        Foreground="{StaticResource Muted}"
+                        Margin="0,8,0,4" />
                     <WrapPanel Margin="0,8,0,6">
-                        <TextBlock Text="{Binding SelectedBooking.BookingId}" FontWeight="SemiBold" Margin="0,0,16,0"/>
-                        <TextBlock Text="{Binding SelectedBooking.CustomerName}"/>
+                        <TextBlock
+                            Text="{Binding SelectedBooking.BookingId}"
+                            FontWeight="SemiBold"
+                            Margin="0,0,16,0" />
+                        <TextBlock Text="{Binding SelectedBooking.CustomerName}" />
                     </WrapPanel>
-                    <TextBlock Text="{Binding RoomText, StringFormat='Rooms: {0}'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock
+                        Text="{Binding RoomText, StringFormat='Rooms: {0}'}"
+                        TextWrapping="Wrap"
+                        Margin="0,0,0,8" />
+                    <!-- Already paid includes the room payment collected at check-in. -->
                     <UniformGrid Columns="4" Margin="0,0,0,8">
-                        <StackPanel><TextBlock Text="ROOM CHARGE" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding SelectedBooking.RoomSubtotal, StringFormat=N0}"/></StackPanel>
-                        <StackPanel><TextBlock Text="SERVICES" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding SelectedBooking.ServiceSubtotal, StringFormat=N0}"/></StackPanel>
-                        <StackPanel><TextBlock Text="ALREADY PAID" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding SelectedBooking.PaidAmount, StringFormat=N0}"/></StackPanel>
-                        <StackPanel><TextBlock Text="AMOUNT DUE (VND)" Style="{StaticResource FieldLabel}"/><TextBlock Text="{Binding AmountDue, StringFormat=N0}" Foreground="{StaticResource Accent}" FontWeight="Bold" FontSize="18"/></StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="ROOM CHARGE" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="{Binding SelectedBooking.RoomSubtotal, StringFormat=N0}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="SERVICES" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="{Binding SelectedBooking.ServiceSubtotal, StringFormat=N0}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="ALREADY PAID" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="{Binding SelectedBooking.PaidAmount, StringFormat=N0}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="AMOUNT DUE (VND)" Style="{StaticResource FieldLabel}" />
+                            <TextBlock
+                                Text="{Binding AmountDue, StringFormat=N0}"
+                                Foreground="{StaticResource Accent}"
+                                FontWeight="Bold"
+                                FontSize="18" />
+                        </StackPanel>
                     </UniformGrid>
-                    <TextBlock Text="{Binding CreditBalance, StringFormat='Overpaid balance (VND): {0:N0}'}" Foreground="{StaticResource Muted}"/>
-                    <TextBlock Text="The room charge uses all booked nights. Overpaid balances remain recorded for separate settlement."
-                               Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,8"/>
-                    <CheckBox Content="I have received the remaining amount in cash (skip when amount due is 0)."
-                              IsChecked="{Binding CashReceived, Mode=TwoWay}" IsEnabled="{Binding CanOperate}" Margin="0,0,0,12"/>
-                    <Button Content="Confirm check-out" Command="{Binding CheckOutCommand}"
-                            Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
+                    <TextBlock
+                        Text="{Binding CreditBalance, StringFormat='Overpaid balance (VND): {0:N0}'}"
+                        Foreground="{StaticResource Muted}" />
+                    <TextBlock
+                        Text="The room charge uses all booked nights. Overpaid balances remain recorded for separate settlement."
+                        Foreground="{StaticResource Muted}"
+                        FontSize="12"
+                        TextWrapping="Wrap"
+                        Margin="0,6,0,8" />
+                    <!-- The command needs this confirmation only when AmountDue is greater than zero. -->
+                    <CheckBox
+                        Content="I have received the remaining amount in cash (skip when amount due is 0)."
+                        IsChecked="{Binding CashReceived, Mode=TwoWay}"
+                        IsEnabled="{Binding CanOperate}"
+                        Margin="0,0,0,12" />
+                    <Button
+                        Content="Confirm check-out"
+                        Command="{Binding CheckOutCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        HorizontalAlignment="Right" />
                 </StackPanel>
             </ScrollViewer>
         </Border>

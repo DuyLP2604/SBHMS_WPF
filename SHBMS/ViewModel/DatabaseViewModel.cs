@@ -7,7 +7,9 @@ namespace SHBMS.ViewModel
 {
     public abstract class DatabaseViewModel : BaseViewModel
     {
+        // Prevent overlapping commands and repeated clicks while an operation is running.
         private bool _isBusy;
+        // Keep compatibility with older pages that still bind to StatusMessage.
         private string _statusMessage = "";
 
         public bool IsBusy
@@ -37,6 +39,9 @@ namespace SHBMS.ViewModel
 
         public RelayCommand RefreshCommand { get; }
 
+        /// <summary>
+        /// Create a refresh command that waits for the current operation to finish.
+        /// </summary>
         protected DatabaseViewModel()
         {
             RefreshCommand = new RelayCommand(
@@ -44,13 +49,22 @@ namespace SHBMS.ViewModel
                 _ => !IsBusy);
         }
 
+        /// <summary>
+        /// Reload page data through the shared busy and error handling flow.
+        /// </summary>
         public Task ReloadAsync()
         {
             return RunAsync(LoadDataAsync);
         }
 
+        /// <summary>
+        /// Let each page define which data it loads from the database.
+        /// </summary>
         protected abstract Task LoadDataAsync();
 
+        /// <summary>
+        /// Wrap an async action with busy checks and an optional permission rule.
+        /// </summary>
         protected RelayCommand DatabaseCommand(
             Func<Task> action,
             Func<bool>? allowed = null)
@@ -60,6 +74,9 @@ namespace SHBMS.ViewModel
                 _ => !IsBusy && (allowed?.Invoke() ?? true));
         }
 
+        /// <summary>
+        /// Show one toast and keep the same message available for data binding.
+        /// </summary>
         protected void Notify(
             string message,
             string type = "info")
@@ -73,6 +90,9 @@ namespace SHBMS.ViewModel
             ToastService.Show(message, type);
         }
 
+        /// <summary>
+        /// Run one operation at a time and convert failures into readable toasts.
+        /// </summary>
         protected async Task RunAsync(Func<Task> action)
         {
             if (IsBusy)
@@ -99,6 +119,9 @@ namespace SHBMS.ViewModel
             }
         }
 
+        /// <summary>
+        /// Compare search text without depending on upper or lower case.
+        /// </summary>
         protected static bool Contains(
             string? value,
             string keyword)

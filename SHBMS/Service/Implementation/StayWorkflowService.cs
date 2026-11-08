@@ -9,25 +9,37 @@ namespace SHBMS.Service.Implementation;
 public class StayWorkflowService
 {
     private readonly Func<Prn212SbhmsContext> _createContext;
+
+    // Use one current time per action for date checks and saved payment times.
     private readonly Func<DateTime> _clock;
 
+    /// <summary>
+    /// Set the database context factory and clock for stay operations.
+    /// </summary>
     public StayWorkflowService(Func<Prn212SbhmsContext>? createContext = null, Func<DateTime>? clock = null)
     {
         _createContext = createContext ?? (() => new Prn212SbhmsContext());
         _clock = clock ?? (() => DateTime.Now);
     }
 
+    /// <summary>
+    /// Require the signed-in Staff account to match a linked database employee.
+    /// </summary>
     private static async Task VerifyStaffAsync(Prn212SbhmsContext db)
     {
         var account = Session.CurrentAccount;
         if (account?.Role != "Staff" || string.IsNullOrWhiteSpace(account.EmployeeId)
-            || !await db.Employees.AnyAsync(e => e.EmployeeId == account.EmployeeId
+                || !await db.Employees.AnyAsync(e => e.EmployeeId == account.EmployeeId
                 && e.UserId == account.UserId && e.User.Role == "Staff"))
             throw new UnauthorizedAccessException("Only Staff can check guests in or out.");
     }
 
+    /// <summary>
+    /// Allow confirmed arrivals today with at least one room detail.
+    /// </summary>
     private static void ValidateCheckIn(Booking booking, DateTime now)
     {
+        // Compare calendar dates only; there is no required check-in hour.
         var today = DateOnly.FromDateTime(now);
         if (booking.IsDeleted || booking.BookingStatus != "CONFIRMED")
             throw new InvalidOperationException("Only a confirmed booking can check in. Refresh the list.");
@@ -41,6 +53,9 @@ public class StayWorkflowService
             throw new InvalidOperationException("This booking has no room details.");
     }
 
+    /// <summary>
+    /// Load the booking records needed to validate and complete a stay action.
+    /// </summary>
     private static async Task<Booking> ReadBookingAsync(Prn212SbhmsContext db, string bookingId)
     {
         return await db.Bookings.Include(b => b.BookingDetails).ThenInclude(d => d.RoomAssignments)
@@ -49,6 +64,9 @@ public class StayWorkflowService
             ?? throw new InvalidOperationException("Booking no longer exists.");
     }
 
+    /// <summary>
+    /// Find ACTIVE rooms that are free for this booking and its room types.
+    /// </summary>
     private static async Task<List<Room>> AvailableRoomsAsync(
         Prn212SbhmsContext db, Booking booking, DateOnly today)
     {
@@ -56,18 +74,21 @@ public class StayWorkflowService
         // Checked-in guests keep their rooms until checkout, including overdue stays.
         // Other reservations block only overlapping dates; checkout date is exclusive.
         var blocked = db.RoomAssignments.Where(a => a.BookingDetail.BookingId != booking.BookingId
-            && !a.BookingDetail.Booking.IsDeleted
-            && (a.BookingDetail.Booking.BookingStatus == "CHECKED_IN"
+                && !a.BookingDetail.Booking.IsDeleted
+                && (a.BookingDetail.Booking.BookingStatus == "CHECKED_IN"
                 || ((a.BookingDetail.Booking.BookingStatus == "PENDING"
-                    || a.BookingDetail.Booking.BookingStatus == "CONFIRMED")
-                    && a.BookingDetail.Booking.CheckInDate < booking.CheckOutDate
-                    && a.BookingDetail.Booking.CheckOutDate > today)))
+                || a.BookingDetail.Booking.BookingStatus == "CONFIRMED")
+                && a.BookingDetail.Booking.CheckInDate < booking.CheckOutDate
+                && a.BookingDetail.Booking.CheckOutDate > today)))
             .Select(a => a.RoomId);
         return await db.Rooms.AsNoTracking()
             .Where(r => r.Status == "ACTIVE" && typeIds.Contains(r.RoomTypeId) && !blocked.Contains(r.RoomId))
             .OrderBy(r => r.RoomNumber).ToListAsync();
     }
 
+    /// <summary>
+    /// Check Staff access and arrival eligibility before offering room choices.
+    /// </summary>
     public async Task<List<Room>> GetAvailableRoomsAsync(string bookingId)
     {
         using var db = _createContext();
@@ -79,6 +100,9 @@ public class StayWorkflowService
         return await AvailableRoomsAsync(db, booking, today);
     }
 
+    /// <summary>
+    /// Collect the full room balance and assign rooms in one transaction.
+    /// </summary>
     public async Task CheckInAsync(string bookingId, List<RoomSelectionDto> selections,
         decimal quotedRoomTotal, decimal quotedPaid, bool cashReceived)
     {
@@ -95,6 +119,7 @@ public class StayWorkflowService
         int nights = booking.CheckOutDate.DayNumber - booking.CheckInDate.DayNumber;
         decimal roomTotal = booking.BookingDetails.Sum(d => d.Quantity * d.UnitPrice * nights);
         decimal paid = booking.Payments.Sum(p => p.Amount);
+        // Reject an old screen balance if another operation changed charges or payments.
         if (roomTotal != quotedRoomTotal || paid != quotedPaid)
             throw new InvalidOperationException("Room charges or payments changed. Refresh and review the balance again.");
         decimal remaining = Math.Max(0, roomTotal - paid);
@@ -102,8 +127,9 @@ public class StayWorkflowService
             throw new ArgumentException("Confirm that the full remaining room payment has been received in cash.");
 
         if (selections.Count != booking.BookingDetails.Sum(d => d.Quantity)
-            || selections.Any(s => string.IsNullOrWhiteSpace(s.RoomId)))
+                || selections.Any(s => string.IsNullOrWhiteSpace(s.RoomId)))
             throw new ArgumentException("Select a room for every row.");
+        // Every required room needs a unique physical room, including rooms of the same type.
         if (selections.Select(s => s.RoomId).Distinct().Count() != selections.Count)
             throw new ArgumentException("Each selected room must be different.");
         if (selections.Any(s => !booking.BookingDetails.Any(d => d.RoomTypeId == s.RoomTypeId)))
@@ -125,8 +151,12 @@ public class StayWorkflowService
             db.Payments.Add(new Payment
             {
                 PaymentId = EntityIds.Next(await db.Payments.Select(p => p.PaymentId).ToListAsync(), "PM", 4),
-                BookingId = bookingId, PaymentTime = now, Amount = remaining, MethodId = "PT03",
+                BookingId = bookingId,
+                PaymentTime = now,
+                Amount = remaining,
+                MethodId = "PT03",
                 CollectedByEmployee = Session.CurrentAccount!.EmployeeId,
+                // PT03 is the configured cash method; staff confirms cash before this payment is saved.
                 Note = "Remaining room charge collected at check-in."
             });
         }
@@ -137,8 +167,10 @@ public class StayWorkflowService
             foreach (var selected in selections.Where(s => s.RoomTypeId == detail.RoomTypeId))
                 db.RoomAssignments.Add(new RoomAssignment
                 {
-                    BookingDetailId = detail.BookingDetailId, RoomId = selected.RoomId,
-                    EmployeeId = Session.CurrentAccount!.EmployeeId, AssignedAt = now
+                    BookingDetailId = detail.BookingDetailId,
+                    RoomId = selected.RoomId,
+                    EmployeeId = Session.CurrentAccount!.EmployeeId,
+                    AssignedAt = now
                 });
         }
         booking.BookingStatus = "CHECKED_IN";
@@ -146,6 +178,9 @@ public class StayWorkflowService
         await transaction.CommitAsync();
     }
 
+    /// <summary>
+    /// Cancel a confirmed booking only after its arrival date has passed.
+    /// </summary>
     public async Task CancelNoShowAsync(string bookingId)
     {
         using var db = _createContext();
@@ -159,12 +194,21 @@ public class StayWorkflowService
 
         // Cancellation keeps the booking, payments and room assignments as history.
         booking.BookingStatus = "CANCELLED";
+        // Keep a clear no-show reason without deleting records or creating a refund.
         booking.CancellationReason = "No-show: check-in date has passed.";
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
     }
 
-    public async Task<string> CheckOutAsync(string bookingId, decimal quotedTotal, decimal quotedPaid, bool cashReceived)
+    /// <summary>
+    /// Settle the bill, reject unfinished service orders and release the stay.
+    /// </summary>
+    public async Task<string> CheckOutAsync(
+        string bookingId,
+        decimal quotedTotal,
+        decimal quotedPaid,
+        bool cashReceived
+    )
     {
         using var db = _createContext();
         using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
@@ -181,18 +225,21 @@ public class StayWorkflowService
         decimal total = booking.BookingDetails.Sum(d => d.Quantity * d.UnitPrice * nights)
             + booking.BookingServices.Sum(s => s.Quantity * s.UnitPrice);
         decimal paid = booking.Payments.Sum(p => p.Amount);
+        // Recheck the quoted bill before recording payment or creating an invoice.
         if (total != quotedTotal || paid != quotedPaid)
             throw new InvalidOperationException("Charges or payments changed. Refresh and review the balance again.");
         decimal remaining = total - paid;
         if (remaining > 0 && !cashReceived)
             throw new ArgumentException("Confirm that the remaining cash payment has been received.");
 
+        // Pending and InProgress orders do not block checkout and must not be billed.
         var openRequests = await db.ServiceRequests.Where(r => r.BookingId == bookingId
-            && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress")).ToListAsync();
+                && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress")).ToListAsync();
         DateTime now = _clock();
         foreach (var request in openRequests)
         {
             request.RequestStatus = "Rejected";
+            // Record who closed each unfinished order when checkout rejects it.
             request.HandledByEmployeeId = Session.CurrentAccount!.EmployeeId;
             request.ResolvedAt = now;
         }
@@ -204,15 +251,23 @@ public class StayWorkflowService
             db.Payments.Add(new Payment
             {
                 PaymentId = EntityIds.Next(await db.Payments.Select(p => p.PaymentId).ToListAsync(), "PM", 4),
-                BookingId = bookingId, PaymentTime = now, Amount = remaining, MethodId = "PT03",
-                CollectedByEmployee = Session.CurrentAccount!.EmployeeId, Note = "Remaining balance collected at checkout."
+                BookingId = bookingId,
+                PaymentTime = now,
+                Amount = remaining,
+                MethodId = "PT03",
+                CollectedByEmployee = Session.CurrentAccount!.EmployeeId,
+                Note = "Remaining balance collected at checkout."
             });
         }
+        // One invoice closes the stay; an existing invoice was rejected earlier.
         string invoiceId = EntityIds.Next(await db.Invoices.Select(i => i.InvoiceId).ToListAsync(), "HD", 4);
         db.Invoices.Add(new Invoice
         {
-            InvoiceId = invoiceId, BookingId = bookingId, InvoiceDate = now,
-            TotalAmount = total, EmployeeId = Session.CurrentAccount!.EmployeeId
+            InvoiceId = invoiceId,
+            BookingId = bookingId,
+            InvoiceDate = now,
+            TotalAmount = total,
+            EmployeeId = Session.CurrentAccount!.EmployeeId
         });
         // Keep assignments as history. Room occupancy is derived from CHECKED_IN status.
         booking.BookingStatus = "CHECKED_OUT";

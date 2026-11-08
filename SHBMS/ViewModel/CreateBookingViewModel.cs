@@ -5,7 +5,9 @@ using SHBMS.Helper;
 using SHBMS.Service.Interface;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+
 namespace SHBMS.ViewModel;
+
 public class CreateBookingViewModel : DatabaseViewModel
 {
     private readonly IBookingService _service;
@@ -13,6 +15,8 @@ public class CreateBookingViewModel : DatabaseViewModel
     public ObservableCollection<BookingCustomerDto> CustomerMatches { get; } = new();
     public ObservableCollection<string> Nationalities { get; } = new();
     public ObservableCollection<AvailableRoomTypeDto> AvailableTypes { get; } = new();
+
+    // Draft room lines exist only on this form until Confirm booking succeeds.
     public ObservableCollection<BookingRoomLineDto> Cart { get; } = new();
     public DateTime Today => DateTime.Today;
     public int NumberOfNights => CheckInDate.HasValue && CheckOutDate.HasValue
@@ -20,30 +24,82 @@ public class CreateBookingViewModel : DatabaseViewModel
     public decimal TotalAmount => Cart.Sum(r => r.LineTotal);
     public int TotalRooms => Cart.Sum(r => r.Quantity);
     private string _phoneSearch = "";
-    public string PhoneSearch { get => _phoneSearch; set => SetProperty(ref _phoneSearch, value); }
+    public string PhoneSearch
+    {
+        get => _phoneSearch;
+        set => SetProperty(ref _phoneSearch, value);
+    }
+
     private string _fullName = "";
-    public string FullName { get => _fullName; set => SetProperty(ref _fullName, value); }
+    public string FullName
+    {
+        get => _fullName;
+        set => SetProperty(ref _fullName, value);
+    }
+
     private string _phone = "";
-    public string Phone { get => _phone; set => SetProperty(ref _phone, value); }
+    public string Phone
+    {
+        get => _phone;
+        set => SetProperty(ref _phone, value);
+    }
+
     private string _identityNumber = "";
-    public string IdentityNumber { get => _identityNumber; set => SetProperty(ref _identityNumber, value); }
+    public string IdentityNumber
+    {
+        get => _identityNumber;
+        set => SetProperty(ref _identityNumber, value);
+    }
+
     private string _email = "";
-    public string Email { get => _email; set => SetProperty(ref _email, value); }
+    public string Email
+    {
+        get => _email;
+        set => SetProperty(ref _email, value);
+    }
+
     private string _address = "";
-    public string Address { get => _address; set => SetProperty(ref _address, value); }
+    public string Address
+    {
+        get => _address;
+        set => SetProperty(ref _address, value);
+    }
+
     private string _nationalityName = "";
-    public string NationalityName { get => _nationalityName; set => SetProperty(ref _nationalityName, value ?? ""); }
+    public string NationalityName
+    {
+        get => _nationalityName;
+        set => SetProperty(ref _nationalityName, value ?? "");
+    }
+
     private string _quantityText = "";
-    public string QuantityText { get => _quantityText; set => SetProperty(ref _quantityText, value); }
+    public string QuantityText
+    {
+        get => _quantityText;
+        set => SetProperty(ref _quantityText, value);
+    }
+
+    // Choose either an existing customer or new customer details for this booking.
     private bool _isNewCustomer;
     public bool IsNewCustomer
     {
         get => _isNewCustomer;
-        private set { SetProperty(ref _isNewCustomer, value); OnPropertyChanged(nameof(IsCustomerReadOnly)); OnPropertyChanged(nameof(CustomerModeText)); }
+        private set
+        {
+            SetProperty(ref _isNewCustomer, value);
+            OnPropertyChanged(nameof(IsCustomerReadOnly));
+            OnPropertyChanged(nameof(CustomerModeText));
+        }
     }
+
+    // Existing profiles are read-only here to avoid changing them during booking.
     public bool IsCustomerReadOnly => !IsNewCustomer;
-    public string CustomerModeText => IsNewCustomer ? "New customer - saved together with the booking."
-        : SelectedCustomer == null ? "Search and select an existing customer, or choose New customer." : "Selected customer: " + SelectedCustomer.CustomerId;
+    public string CustomerModeText =>
+        IsNewCustomer
+        ? "New customer - saved together with the booking."
+        : SelectedCustomer == null
+        ? "Search and select an existing customer, or choose New customer."
+        : "Selected customer: " + SelectedCustomer.CustomerId;
     private BookingCustomerDto? _selectedCustomer;
     public BookingCustomerDto? SelectedCustomer
     {
@@ -51,31 +107,69 @@ public class CreateBookingViewModel : DatabaseViewModel
         set
         {
             SetProperty(ref _selectedCustomer, value);
-            if (value != null) IsNewCustomer = false;
-            FullName = value?.FullName ?? ""; Phone = value?.Phone ?? "";
-            IdentityNumber = value?.IdentityNumber ?? ""; Email = value?.Email ?? "";
-            Address = value?.Address ?? ""; NationalityName = value?.NationalityName ?? "";
-            OnPropertyChanged(nameof(CustomerModeText)); CommandManager.InvalidateRequerySuggested();
+            if (value != null)
+                IsNewCustomer = false;
+            FullName = value?.FullName ?? "";
+            Phone = value?.Phone ?? "";
+            IdentityNumber = value?.IdentityNumber ?? "";
+            Email = value?.Email ?? "";
+            Address = value?.Address ?? "";
+            NationalityName = value?.NationalityName ?? "";
+            OnPropertyChanged(nameof(CustomerModeText));
+            CommandManager.InvalidateRequerySuggested();
         }
     }
+
     private DateTime? _checkInDate = DateTime.Today;
     public DateTime? CheckInDate
     {
         get => _checkInDate;
-        set { if (SetProperty(ref _checkInDate, value)) { InvalidateRooms(); OnPropertyChanged(nameof(NumberOfNights)); } }
+        set
+        {
+            if (SetProperty(ref _checkInDate, value))
+            {
+                InvalidateRooms();
+                OnPropertyChanged(nameof(NumberOfNights));
+            }
+        }
     }
+
     private DateTime? _checkOutDate = DateTime.Today.AddDays(1);
     public DateTime? CheckOutDate
     {
         get => _checkOutDate;
-        set { if (SetProperty(ref _checkOutDate, value)) { InvalidateRooms(); OnPropertyChanged(nameof(NumberOfNights)); } }
+        set
+        {
+            if (SetProperty(ref _checkOutDate, value))
+            {
+                InvalidateRooms();
+                OnPropertyChanged(nameof(NumberOfNights));
+            }
+        }
     }
+
+    // Confirmation requires a room search for the current dates.
     private bool _hasRoomSearch;
-    public bool HasRoomSearch { get => _hasRoomSearch; private set => SetProperty(ref _hasRoomSearch, value); }
+    public bool HasRoomSearch
+    {
+        get => _hasRoomSearch;
+        private set => SetProperty(ref _hasRoomSearch, value);
+    }
+
     private AvailableRoomTypeDto? _selectedAvailableType;
-    public AvailableRoomTypeDto? SelectedAvailableType { get => _selectedAvailableType; set => SetProperty(ref _selectedAvailableType, value); }
+    public AvailableRoomTypeDto? SelectedAvailableType
+    {
+        get => _selectedAvailableType;
+        set => SetProperty(ref _selectedAvailableType, value);
+    }
+
     private BookingRoomLineDto? _selectedCartItem;
-    public BookingRoomLineDto? SelectedCartItem { get => _selectedCartItem; set => SetProperty(ref _selectedCartItem, value); }
+    public BookingRoomLineDto? SelectedCartItem
+    {
+        get => _selectedCartItem;
+        set => SetProperty(ref _selectedCartItem, value);
+    }
+
     public RelayCommand SearchCustomersCommand { get; }
     public RelayCommand NewCustomerCommand { get; }
     public RelayCommand SearchRoomsCommand { get; }
@@ -84,42 +178,87 @@ public class CreateBookingViewModel : DatabaseViewModel
     public RelayCommand ConfirmCommand { get; }
     public RelayCommand BackCommand { get; }
     public event Action? BackRequested;
+
+    // Send the new ID back so the booking list can display the saved booking.
     public event Action<string>? BookingCreated;
+
+    /// <summary>
+    /// Prepare customer selection, room search and booking submission commands.
+    /// </summary>
     public CreateBookingViewModel(IBookingService? service = null)
     {
         _service = service ?? new SHBMS.Service.Implementation.BookingService();
         QuantityText = "1";
         SearchCustomersCommand = DatabaseCommand(SearchCustomersAsync, () => CanCreate);
-        NewCustomerCommand = new RelayCommand(_ => { SelectedCustomer = null; IsNewCustomer = true; Phone = PhoneSearch.Trim(); }, _ => CanCreate && !IsBusy);
+        NewCustomerCommand = new RelayCommand(
+            _ =>
+            {
+                SelectedCustomer = null;
+                IsNewCustomer = true;
+                Phone = PhoneSearch.Trim();
+            },
+            _ => CanCreate && !IsBusy
+        );
         SearchRoomsCommand = DatabaseCommand(SearchRoomsAsync, () => CanCreate);
-        AddRoomCommand = new RelayCommand(_ => AddRoom(), _ => CanCreate && !IsBusy && HasRoomSearch && SelectedAvailableType?.AvailableRooms > 0);
-        RemoveRoomCommand = new RelayCommand(_ => { if (SelectedCartItem != null) Cart.Remove(SelectedCartItem); }, _ => CanCreate && !IsBusy && SelectedCartItem != null);
+        AddRoomCommand = new RelayCommand(
+            _ => AddRoom(),
+            _ => CanCreate && !IsBusy && HasRoomSearch && SelectedAvailableType?.AvailableRooms > 0
+        );
+        RemoveRoomCommand = new RelayCommand(
+            _ =>
+            {
+                if (SelectedCartItem != null)
+                    Cart.Remove(SelectedCartItem);
+            },
+            _ => CanCreate && !IsBusy && SelectedCartItem != null
+        );
         ConfirmCommand = DatabaseCommand(ConfirmAsync,
             () => CanCreate && HasRoomSearch && Cart.Count > 0 && (IsNewCustomer || SelectedCustomer != null));
         BackCommand = new RelayCommand(_ => BackRequested?.Invoke(), _ => !IsBusy);
-        Cart.CollectionChanged += (_, _) => { OnPropertyChanged(nameof(TotalAmount)); OnPropertyChanged(nameof(TotalRooms)); CommandManager.InvalidateRequerySuggested(); };
+        Cart.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(TotalAmount));
+            OnPropertyChanged(nameof(TotalRooms));
+            CommandManager.InvalidateRequerySuggested();
+        };
     }
+
+    /// <summary>
+    /// Load nationality choices while keeping the current form value.
+    /// </summary>
     protected override async Task LoadDataAsync()
     {
         if (!CanCreate)
         {
-            CustomerMatches.Clear(); SelectedCustomer = null; InvalidateRooms();
+            CustomerMatches.Clear();
+            SelectedCustomer = null;
+            InvalidateRooms();
             throw new UnauthorizedAccessException("Only Staff can create bookings.");
         }
         using var db = new Prn212SbhmsContext();
         var nations = await db.Nationalities.AsNoTracking().OrderBy(n => n.NationalityName)
             .Select(n => n.NationalityName).ToListAsync();
         string selected = NationalityName;
-        Nationalities.Clear(); Nationalities.Add("");
-        foreach (var nation in nations) Nationalities.Add(nation);
+        Nationalities.Clear();
+        Nationalities.Add("");
+        foreach (var nation in nations)
+            Nationalities.Add(nation);
         NationalityName = selected;
     }
+
+    /// <summary>
+    /// Find customers by phone and automatically select a single match.
+    /// </summary>
     private async Task SearchCustomersAsync()
     {
         var matches = await _service.SearchCustomersAsync(PhoneSearch);
-        IsNewCustomer = false; SelectedCustomer = null;
-        CustomerMatches.Clear(); foreach (var c in matches) CustomerMatches.Add(c);
-        if (matches.Count == 1) SelectedCustomer = matches[0];
+        IsNewCustomer = false;
+        SelectedCustomer = null;
+        CustomerMatches.Clear();
+        foreach (var c in matches)
+            CustomerMatches.Add(c);
+        if (matches.Count == 1)
+            SelectedCustomer = matches[0];
         if (matches.Count == 0)
             Notify("No matching customers. Choose New customer to enter their details.", "warning");
         else if (matches.Count > 1)
@@ -127,58 +266,126 @@ public class CreateBookingViewModel : DatabaseViewModel
         else
             Notify("Customer selected.", "success");
     }
+
+    /// <summary>
+    /// Convert the two date picker values to dates without time values.
+    /// </summary>
     private (DateOnly Arrival, DateOnly Departure) Dates()
     {
-        if (!CheckInDate.HasValue || !CheckOutDate.HasValue) throw new ArgumentException("Choose check-in and check-out dates.");
+        if (!CheckInDate.HasValue || !CheckOutDate.HasValue)
+            throw new ArgumentException("Choose check-in and check-out dates.");
         return (DateOnly.FromDateTime(CheckInDate.Value), DateOnly.FromDateTime(CheckOutDate.Value));
     }
+
+    /// <summary>
+    /// Clear room quotes and selections when their dates may no longer match.
+    /// </summary>
     private void InvalidateRooms()
     {
-        HasRoomSearch = false; SelectedAvailableType = null; SelectedCartItem = null;
-        AvailableTypes.Clear(); Cart.Clear(); CommandManager.InvalidateRequerySuggested();
+        HasRoomSearch = false;
+        SelectedAvailableType = null;
+        SelectedCartItem = null;
+        AvailableTypes.Clear();
+        Cart.Clear();
+        CommandManager.InvalidateRequerySuggested();
     }
+
+    /// <summary>
+    /// Search room type availability for the selected stay dates.
+    /// </summary>
     private async Task SearchRoomsAsync()
     {
         var dates = Dates();
         InvalidateRooms();
         var types = await _service.GetAvailableRoomTypesAsync(dates.Arrival, dates.Departure);
-        foreach (var type in types) AvailableTypes.Add(type);
+        foreach (var type in types)
+            AvailableTypes.Add(type);
         HasRoomSearch = true;
         if (types.Any(t => t.AvailableRooms > 0))
             Notify("Select a room type, enter quantity and add it to the booking.", "info");
         else
             Notify("No rooms are available for these dates.", "warning");
     }
+
+    /// <summary>
+    /// Add rooms to the draft booking without exceeding the quoted availability.
+    /// </summary>
     private void AddRoom()
     {
-        if (!CanCreate || !HasRoomSearch || SelectedAvailableType == null) return;
+        if (!CanCreate || !HasRoomSearch || SelectedAvailableType == null)
+            return;
         if (!int.TryParse(QuantityText, out int quantity) || quantity <= 0)
         {
-            Notify("Quantity must be a positive integer.", "warning"); return;
+            Notify("Quantity must be a positive integer.", "warning");
+            return;
         }
         var type = SelectedAvailableType;
+        // Adding the same type again increases its quantity instead of adding a duplicate line.
         var existing = Cart.FirstOrDefault(r => r.RoomTypeId == type.RoomTypeId);
+        // Use a larger number type while adding quantities to avoid integer overflow.
         long combined = (long)(existing?.Quantity ?? 0) + quantity;
-        if (combined > type.AvailableRooms) { Notify("The requested quantity exceeds available rooms.", "warning"); return; }
-        if (existing != null) Cart.Remove(existing);
-        Cart.Add(new BookingRoomLineDto { RoomTypeId = type.RoomTypeId, TypeName = type.Name,
-            Quantity = (int)combined, UnitPrice = type.UnitPrice, NumberOfNights = NumberOfNights });
+        if (combined > type.AvailableRooms)
+        {
+            Notify("The requested quantity exceeds available rooms.", "warning");
+            return;
+        }
+        if (existing != null)
+            Cart.Remove(existing);
+        Cart.Add(new BookingRoomLineDto
+        {
+            RoomTypeId = type.RoomTypeId,
+            TypeName = type.Name,
+            Quantity = (int)combined,
+            UnitPrice = type.UnitPrice,
+            NumberOfNights = NumberOfNights
+        });
         Notify("Room selection updated. To change a quantity, remove its row and add it again.", "success");
     }
+
+    /// <summary>
+    /// Submit the draft and notify the parent when the booking is created.
+    /// </summary>
     private async Task ConfirmAsync()
     {
-        if (!CanCreate) throw new UnauthorizedAccessException("Only Staff can create bookings.");
+        if (!CanCreate)
+            throw new UnauthorizedAccessException("Only Staff can create bookings.");
         var dates = Dates();
-        var request = new BookingCreateDto {
+        // Send the displayed prices for comparison; the service saves verified database prices.
+        var request = new BookingCreateDto
+        {
             CustomerId = IsNewCustomer ? null : SelectedCustomer?.CustomerId,
-            NewCustomer = IsNewCustomer ? new NewBookingCustomerDto { FullName = FullName, Phone = Phone,
-                IdentityNumber = IdentityNumber, Email = Email, Address = Address, NationalityName = NationalityName } : null,
-            CheckInDate = dates.Arrival, CheckOutDate = dates.Departure,
-            Rooms = Cart.Select(r => new BookingRoomRequestDto { RoomTypeId = r.RoomTypeId, Quantity = r.Quantity, QuotedUnitPrice = r.UnitPrice }).ToList()
+            NewCustomer = IsNewCustomer ? new NewBookingCustomerDto
+            {
+                FullName = FullName,
+                Phone = Phone,
+                IdentityNumber = IdentityNumber,
+                Email = Email,
+                Address = Address,
+                NationalityName = NationalityName
+            }
+                : null,
+            CheckInDate = dates.Arrival,
+            CheckOutDate = dates.Departure,
+            Rooms = Cart
+                .Select(r => new BookingRoomRequestDto
+                {
+                    RoomTypeId = r.RoomTypeId,
+                    Quantity = r.Quantity,
+                    QuotedUnitPrice = r.UnitPrice
+                })
+                .ToList()
         };
         string id;
-        try { id = await _service.CreateBookingAsync(request); }
-        catch (InvalidOperationException) { InvalidateRooms(); throw; }
+        try
+        {
+            id = await _service.CreateBookingAsync(request);
+        }
+        // A changed price or availability requires a fresh room search before retrying.
+        catch (InvalidOperationException)
+        {
+            InvalidateRooms();
+            throw;
+        }
         BookingCreated?.Invoke(id);
     }
 }

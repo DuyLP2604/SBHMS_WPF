@@ -5,45 +5,84 @@ using SHBMS.Model;
 using SHBMS.Service.Interface;
 using System.Data;
 using System.Net.Mail;
+
 namespace SHBMS.Service.Implementation;
+
 public class BookingService : IBookingService
 {
     private readonly Func<Prn212SbhmsContext> _createContext;
+
+    // Use the same current time for a booking operation; tests can supply another clock.
     private readonly Func<DateTime> _clock;
+
+    /// <summary>
+    /// Set the database context factory and clock used by booking operations.
+    /// </summary>
     public BookingService(Func<Prn212SbhmsContext>? createContext = null, Func<DateTime>? clock = null)
     {
         _createContext = createContext ?? (() => new Prn212SbhmsContext());
         _clock = clock ?? (() => DateTime.Now);
     }
+
+    /// <summary>
+    /// Check the session before allowing access to booking information.
+    /// </summary>
     private static void RequireBookingView()
     {
         if (!Session.CanViewBookings)
             throw new UnauthorizedAccessException("Only Staff and Manager can access bookings.");
     }
+
+    /// <summary>
+    /// Verify that the database account still has Staff or Manager access.
+    /// </summary>
     private static async Task VerifyBookingViewerAsync(Prn212SbhmsContext db)
     {
         var account = Session.CurrentAccount!;
         if (!await db.Users.AnyAsync(u => u.UserId == account.UserId
-            && (u.Role == "Staff" || u.Role == "Manager")))
+                && (u.Role == "Staff" || u.Role == "Manager")))
             throw new UnauthorizedAccessException("Your database account cannot access bookings.");
     }
+
+    /// <summary>
+    /// Require an arrival from today onward and at least one booked night.
+    /// </summary>
     private static void ValidateDates(DateOnly arrival, DateOnly departure, DateOnly today)
     {
-        if (arrival < today) throw new ArgumentException("Check-in date cannot be in the past.");
-        if (departure <= arrival) throw new ArgumentException("Check-out date must be after check-in date.");
+        if (arrival < today)
+            throw new ArgumentException("Check-in date cannot be in the past.");
+        if (departure <= arrival)
+            throw new ArgumentException("Check-out date must be after check-in date.");
     }
 
+    /// <summary>
+    /// Search phone numbers and return customer details for the booking form.
+    /// </summary>
     public async Task<List<BookingCustomerDto>> SearchCustomersAsync(string phone)
     {
         RequireBookingView();
         string keyword = phone.Trim();
-        if (keyword.Length == 0) throw new ArgumentException("Enter a phone number to search.");
+        if (keyword.Length == 0)
+            throw new ArgumentException("Enter a phone number to search.");
         using var db = _createContext();
         await VerifyBookingViewerAsync(db);
         return await db.Customers.AsNoTracking().Where(c => c.Phone.Contains(keyword)).OrderBy(c => c.FullName)
-            .Select(c => new BookingCustomerDto { CustomerId = c.CustomerId, FullName = c.FullName, Phone = c.Phone,
-                IdentityNumber = c.IdentityNumber, Email = c.Email, Address = c.Address, NationalityName = c.Nationality == null ? null : c.Nationality.NationalityName }).ToListAsync();
+            .Select(c => new BookingCustomerDto
+            {
+                CustomerId = c.CustomerId,
+                FullName = c.FullName,
+                Phone = c.Phone,
+                IdentityNumber = c.IdentityNumber,
+                Email = c.Email,
+                Address = c.Address,
+                NationalityName = c.Nationality == null ? null : c.Nationality.NationalityName
+            })
+            .ToListAsync();
     }
+
+    /// <summary>
+    /// Validate the dates and read available quantities for each room type.
+    /// </summary>
     public async Task<List<AvailableRoomTypeDto>> GetAvailableRoomTypesAsync(DateOnly arrival, DateOnly departure)
     {
         RequireBookingView();
@@ -55,12 +94,19 @@ public class BookingService : IBookingService
         await VerifyBookingViewerAsync(db);
         return await ReadAvailabilityAsync(db, arrival, departure, today);
     }
+
+    /// <summary>
+    /// Count rooms that can support the requested stay and existing reservations.
+    /// </summary>
     private static async Task<List<AvailableRoomTypeDto>> ReadAvailabilityAsync(
         Prn212SbhmsContext db, DateOnly arrival, DateOnly departure, DateOnly today)
     {
         var types = await db.RoomTypes.AsNoTracking().OrderBy(t => t.TypeName).ToListAsync();
         var rooms = await db.Rooms.AsNoTracking().Where(r => r.Status == "ACTIVE").ToListAsync();
-        var reservations = await db.BookingDetails.AsNoTracking().Include(d => d.Booking).Include(d => d.RoomAssignments)
+        var reservations = await db.BookingDetails
+            .AsNoTracking()
+            .Include(d => d.Booking)
+            .Include(d => d.RoomAssignments)
             .Where(d => !d.Booking.IsDeleted && (d.Booking.BookingStatus == "PENDING"
                 || d.Booking.BookingStatus == "CONFIRMED" || d.Booking.BookingStatus == "CHECKED_IN"))
             .AsSplitQuery().ToListAsync();
@@ -68,35 +114,58 @@ public class BookingService : IBookingService
         foreach (var type in types)
         {
             var activeIds = rooms.Where(r => r.RoomTypeId == type.RoomTypeId).Select(r => r.RoomId).ToHashSet();
+            // Keep assigned room numbers blocked for the stay being searched.
             var fixedRooms = new HashSet<string>();
             var allDemand = new List<RoomReservation>();
+            // Bookings without room numbers still reserve room type inventory.
             var unassignedDemand = new List<RoomReservation>();
             foreach (var detail in reservations.Where(d => d.RoomTypeId == type.RoomTypeId))
             {
                 var booking = detail.Booking;
                 bool inHouse = booking.BookingStatus == "CHECKED_IN";
                 var start = inHouse && booking.CheckInDate > today ? today : booking.CheckInDate;
+                // A checked-in booking that is past departure still occupies rooms until checkout.
                 var end = inHouse && booking.CheckOutDate <= today ? DateOnly.MaxValue : booking.CheckOutDate;
+                // Limit each existing stay to the part that overlaps the requested dates.
                 start = start < arrival ? arrival : start;
                 end = end > departure ? departure : end;
-                if (end <= start) continue;
+                if (end <= start)
+                    continue;
                 allDemand.Add(new RoomReservation(start, end, detail.Quantity, false));
-                var assigned = detail.RoomAssignments.Where(a => activeIds.Contains(a.RoomId)).Select(a => a.RoomId).Distinct().ToList();
+                var assigned = detail.RoomAssignments
+                    .Where(a => activeIds.Contains(a.RoomId))
+                    .Select(a => a.RoomId)
+                    .Distinct()
+                    .ToList();
                 fixedRooms.UnionWith(assigned);
                 int unassigned = Math.Max(0, detail.Quantity - assigned.Count);
-                if (unassigned > 0) unassignedDemand.Add(new RoomReservation(start, end, unassigned, false));
+                if (unassigned > 0)
+                    unassignedDemand.Add(new RoomReservation(start, end, unassigned, false));
             }
+            // Check total room demand as well as rooms available for the entire stay.
             int pooledFree = activeIds.Count - RoomInventoryRules.PeakDemand(allDemand, today);
             // Respect existing room numbers: a new stay needs a room free for its full duration.
             // Unassigned bookings also reserve stock. This deliberately avoids promising room moves.
-            int continuousFree = activeIds.Count - fixedRooms.Count - RoomInventoryRules.PeakDemand(unassignedDemand, today);
-            result.Add(new AvailableRoomTypeDto { RoomTypeId = type.RoomTypeId, Name = type.TypeName,
-                Capacity = type.Capacity, UnitPrice = type.Price,
-                AvailableRooms = Math.Max(0, Math.Min(pooledFree, continuousFree)) });
+            int continuousFree = activeIds.Count - fixedRooms.Count - RoomInventoryRules.PeakDemand(
+                unassignedDemand,
+                today
+            );
+            result.Add(new AvailableRoomTypeDto
+            {
+                RoomTypeId = type.RoomTypeId,
+                Name = type.TypeName,
+                Capacity = type.Capacity,
+                UnitPrice = type.Price,
+                AvailableRooms = Math.Max(0, Math.Min(pooledFree, continuousFree))
+            });
         }
+        // Show sold-out types last while keeping them visible with zero availability.
         return result.OrderBy(t => t.AvailableRooms == 0).ThenBy(t => t.Name).ToList();
     }
 
+    /// <summary>
+    /// Save a confirmed booking and any new customer in one transaction.
+    /// </summary>
     public async Task<string> CreateBookingAsync(BookingCreateDto dto)
     {
         var account = Session.CurrentAccount;
@@ -106,15 +175,18 @@ public class BookingService : IBookingService
         var today = DateOnly.FromDateTime(now);
         ValidateDates(dto.CheckInDate, dto.CheckOutDate, today);
         bool existingCustomer = !string.IsNullOrWhiteSpace(dto.CustomerId);
+        // Exactly one customer source is required: an existing ID or new customer details.
         if (existingCustomer == (dto.NewCustomer != null))
             throw new ArgumentException("Select an existing customer or enter a new customer.");
         if (dto.Rooms.Count == 0 || dto.Rooms.Any(r => string.IsNullOrWhiteSpace(r.RoomTypeId) || r.Quantity <= 0))
             throw new ArgumentException("Add at least one room type with a positive quantity.");
         if (dto.Rooms.Select(r => r.RoomTypeId).Distinct().Count() != dto.Rooms.Count)
             throw new ArgumentException("A room type can only appear once in the booking.");
-        if (dto.NewCustomer != null) ValidateCustomer(dto.NewCustomer);
+        if (dto.NewCustomer != null)
+            ValidateCustomer(dto.NewCustomer);
 
         using var db = _createContext();
+        // Keep customer creation, stock checks and booking creation in the same transaction.
         using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         if (!await db.Employees.AnyAsync(e => e.EmployeeId == account.EmployeeId && e.UserId == account.UserId && e.User.Role == "Staff"))
             throw new UnauthorizedAccessException("Your current database account does not have Staff permission.");
@@ -130,6 +202,7 @@ public class BookingService : IBookingService
             if (requested.QuotedUnitPrice != type.UnitPrice)
                 throw new InvalidOperationException("Room prices have changed. Search rooms again and review the new total.");
         }
+        // Existing customers are reused; a new profile is saved together with the booking.
         Customer customer;
         if (existingCustomer)
         {
@@ -147,23 +220,37 @@ public class BookingService : IBookingService
                 .SingleOrDefaultAsync(n => n.NationalityName == nationName);
             if (nationName != null && nationality == null)
                 throw new ArgumentException("Select a nationality from the list.");
-            customer = new Customer {
+            customer = new Customer
+            {
                 CustomerId = EntityIds.Next(await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3),
-                FullName = form.FullName.Trim(), Phone = form.Phone.Trim(), IdentityNumber = identity,
-                Email = EntityIds.Optional(form.Email), Address = EntityIds.Optional(form.Address),
+                FullName = form.FullName.Trim(),
+                Phone = form.Phone.Trim(),
+                IdentityNumber = identity,
+                Email = EntityIds.Optional(form.Email),
+                Address = EntityIds.Optional(form.Address),
                 NationalityId = nationality?.NationalityId
             };
         }
-        var booking = new Booking {
+        var booking = new Booking
+        {
             BookingId = EntityIds.Next(await db.Bookings.Select(b => b.BookingId).ToListAsync(), "BK", 4),
-            Customer = customer, EmployeeId = account.EmployeeId, BookingDate = now,
-            CheckInDate = dto.CheckInDate, CheckOutDate = dto.CheckOutDate, BookingStatus = "CONFIRMED"
+            Customer = customer,
+            EmployeeId = account.EmployeeId,
+            BookingDate = now,
+            CheckInDate = dto.CheckInDate,
+            CheckOutDate = dto.CheckOutDate,
+            BookingStatus = "CONFIRMED"
         };
         foreach (var requested in dto.Rooms)
         {
             var type = availability.Single(t => t.RoomTypeId == requested.RoomTypeId);
-            booking.BookingDetails.Add(new BookingDetail { RoomTypeId = type.RoomTypeId,
-                Quantity = requested.Quantity, UnitPrice = type.UnitPrice });
+            // Save the agreed nightly price. Room numbers and payment are handled at check-in.
+            booking.BookingDetails.Add(new BookingDetail
+            {
+                RoomTypeId = type.RoomTypeId,
+                Quantity = requested.Quantity,
+                UnitPrice = type.UnitPrice
+            });
         }
         db.Bookings.Add(booking);
         await db.SaveChangesAsync();
@@ -171,14 +258,21 @@ public class BookingService : IBookingService
         return booking.BookingId;
     }
 
+    /// <summary>
+    /// Load booking details and count unfinished service orders for checkout.
+    /// </summary>
     public async Task<List<BookingDto>> GetAllBookingsAsync()
     {
         RequireBookingView();
         using var db = _createContext();
         await VerifyBookingViewerAsync(db);
-        var bookings = await BookingQuery(db).OrderByDescending(b => b.BookingDate).ThenByDescending(b => b.BookingId).ToListAsync();
+        var bookings = await BookingQuery(db)
+            .OrderByDescending(b => b.BookingDate)
+            .ThenByDescending(b => b.BookingId)
+            .ToListAsync();
         var result = bookings.Select(ToDto).ToList();
         var ids = result.Select(b => b.BookingId).ToList();
+        // Open requests are counted for the checkout hint; they are not service charges.
         var openRequests = await db.ServiceRequests.AsNoTracking()
             .Where(r => ids.Contains(r.BookingId) && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"))
             .Select(r => r.BookingId).ToListAsync();
@@ -186,6 +280,10 @@ public class BookingService : IBookingService
             booking.OpenServiceRequestCount = openRequests.Count(id => id == booking.BookingId);
         return result;
     }
+
+    /// <summary>
+    /// Load one booking with charges, payments and unfinished order count.
+    /// </summary>
     public async Task<BookingDto> GetBookingByIdAsync(string bookingId)
     {
         RequireBookingView();
@@ -195,39 +293,74 @@ public class BookingService : IBookingService
             ?? throw new InvalidOperationException("Booking no longer exists. Refresh the list.");
         var result = ToDto(booking);
         result.OpenServiceRequestCount = await db.ServiceRequests.CountAsync(r => r.BookingId == bookingId
-            && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"));
+                && (r.RequestStatus == "Pending" || r.RequestStatus == "InProgress"));
         return result;
     }
+
+    /// <summary>
+    /// Load the related records needed by booking and stay screens.
+    /// </summary>
     private static IQueryable<Booking> BookingQuery(Prn212SbhmsContext db)
         => db.Bookings.AsNoTracking().Where(b => !b.IsDeleted).Include(b => b.Customer).Include(b => b.Employee)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.RoomType)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.RoomAssignments).ThenInclude(a => a.Room)
-            .Include(b => b.BookingServices).ThenInclude(s => s.Service)
-            .Include(b => b.Payments).ThenInclude(p => p.Method).AsSplitQuery();
+        .Include(b => b.BookingDetails).ThenInclude(d => d.RoomType)
+        .Include(b => b.BookingDetails).ThenInclude(d => d.RoomAssignments).ThenInclude(a => a.Room)
+        .Include(b => b.BookingServices).ThenInclude(s => s.Service)
+        .Include(b => b.Payments).ThenInclude(p => p.Method).AsSplitQuery();
+
+    /// <summary>
+    /// Build display data using the booked prices and full booked stay.
+    /// </summary>
     private static BookingDto ToDto(Booking b)
     {
         int nights = b.CheckOutDate.DayNumber - b.CheckInDate.DayNumber;
-        return new BookingDto {
-            BookingId = b.BookingId, CustomerId = b.CustomerId, CustomerName = b.Customer.FullName,
-            CustomerPhone = b.Customer.Phone, EmployeeId = b.EmployeeId, CreatedByEmployeeName = b.Employee.FullName,
-            BookingDate = b.BookingDate, CheckInDate = b.CheckInDate, CheckOutDate = b.CheckOutDate,
+        return new BookingDto
+        {
+            BookingId = b.BookingId,
+            CustomerId = b.CustomerId,
+            CustomerName = b.Customer.FullName,
+            CustomerPhone = b.Customer.Phone,
+            EmployeeId = b.EmployeeId,
+            CreatedByEmployeeName = b.Employee.FullName,
+            BookingDate = b.BookingDate,
+            CheckInDate = b.CheckInDate,
+            CheckOutDate = b.CheckOutDate,
+            // Expose the end of the arrival day for display; eligibility uses dates only.
             CheckInDeadline = b.CheckInDate.ToDateTime(TimeOnly.MaxValue),
-            Status = b.BookingStatus, CancellationReason = b.CancellationReason,
-            Rooms = b.BookingDetails.Select(d => new BookingRoomLineDto { RoomTypeId = d.RoomTypeId,
-                TypeName = d.RoomType.TypeName, Quantity = d.Quantity, UnitPrice = d.UnitPrice, NumberOfNights = nights,
-                AssignedRooms = string.Join(", ", d.RoomAssignments.Select(a => a.Room.RoomNumber)) }).ToList(),
-            Services = b.BookingServices.Select(s => new BookingServiceLineDto { ServiceName = s.Service.ServiceName,
-                Quantity = s.Quantity, UnitPrice = s.UnitPrice }).ToList(),
-            Payments = b.Payments.OrderBy(p => p.PaymentTime).Select(p => new BookingPaymentDto {
-                PaymentTime = p.PaymentTime, MethodName = p.Method.MethodName, Amount = p.Amount }).ToList()
+            Status = b.BookingStatus,
+            CancellationReason = b.CancellationReason,
+            Rooms = b.BookingDetails.Select(d => new BookingRoomLineDto
+            {
+                RoomTypeId = d.RoomTypeId,
+                TypeName = d.RoomType.TypeName,
+                Quantity = d.Quantity,
+                UnitPrice = d.UnitPrice,
+                NumberOfNights = nights,
+                AssignedRooms = string.Join(", ", d.RoomAssignments.Select(a => a.Room.RoomNumber))
+            }).ToList(),
+            Services = b.BookingServices.Select(s => new BookingServiceLineDto
+            {
+                ServiceName = s.Service.ServiceName,
+                Quantity = s.Quantity,
+                UnitPrice = s.UnitPrice
+            }).ToList(),
+            Payments = b.Payments.OrderBy(p => p.PaymentTime).Select(p => new BookingPaymentDto
+            {
+                PaymentTime = p.PaymentTime,
+                MethodName = p.Method.MethodName,
+                Amount = p.Amount
+            }).ToList()
         };
     }
+
+    /// <summary>
+    /// Check required customer details, length limits and email format.
+    /// </summary>
     private static void ValidateCustomer(NewBookingCustomerDto c)
     {
         if (string.IsNullOrWhiteSpace(c.FullName) || string.IsNullOrWhiteSpace(c.Phone))
             throw new ArgumentException("Customer name and phone are required.");
         if (c.FullName.Trim().Length > 100 || c.Phone.Trim().Length > 15 || (c.IdentityNumber?.Trim().Length ?? 0) > 20
-            || (c.Email?.Trim().Length ?? 0) > 100 || (c.Address?.Trim().Length ?? 0) > 200 || (c.NationalityName?.Trim().Length ?? 0) > 50)
+                || (c.Email?.Trim().Length ?? 0) > 100 || (c.Address?.Trim().Length ?? 0) > 200 || (c.NationalityName?.Trim().Length ?? 0) > 50)
             throw new ArgumentException("A customer field exceeds its allowed length.");
         if (!string.IsNullOrWhiteSpace(c.Email) && (!MailAddress.TryCreate(c.Email.Trim(), out var mail) || mail.Address != c.Email.Trim()))
             throw new ArgumentException("Invalid customer email address.");
