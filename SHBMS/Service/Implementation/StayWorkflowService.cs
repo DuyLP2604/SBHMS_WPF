@@ -26,10 +26,6 @@ public class StayWorkflowService
             throw new UnauthorizedAccessException("Only Staff can check guests in or out.");
     }
 
-    private static DateTime CheckInDeadline(Booking booking)
-        => booking.CheckInDeadline ?? booking.CheckInDeadlineOverride
-            ?? booking.CheckInDate.ToDateTime(new TimeOnly(14, 15));
-
     private static void ValidateCheckIn(Booking booking, DateTime now)
     {
         var today = DateOnly.FromDateTime(now);
@@ -39,8 +35,8 @@ public class StayWorkflowService
             throw new InvalidOperationException("This booking has not reached its check-in date.");
         if (today >= booking.CheckOutDate)
             throw new InvalidOperationException("The booking's stay dates have expired.");
-        if (now > CheckInDeadline(booking))
-            throw new InvalidOperationException("The check-in deadline has passed. Cancel this booking as a no-show.");
+        if (today > booking.CheckInDate)
+            throw new InvalidOperationException("The check-in date has passed. Cancel this booking as a no-show.");
         if (booking.BookingDetails.Count == 0)
             throw new InvalidOperationException("This booking has no room details.");
     }
@@ -83,16 +79,27 @@ public class StayWorkflowService
         return await AvailableRoomsAsync(db, booking, today);
     }
 
-    public async Task CheckInAsync(string bookingId, List<RoomSelectionDto> selections)
+    public async Task CheckInAsync(string bookingId, List<RoomSelectionDto> selections,
+        decimal quotedRoomTotal, decimal quotedPaid, bool cashReceived)
     {
         using var db = _createContext();
-        // Recheck availability and save all room assignments + status together.
+        // Save the payment, room assignments and status in one transaction.
         using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         await VerifyStaffAsync(db);
         var booking = await ReadBookingAsync(db, bookingId);
         DateTime now = _clock();
         var today = DateOnly.FromDateTime(now);
         ValidateCheckIn(booking, now);
+
+        // Collect only the unpaid room charge. Services are settled at checkout.
+        int nights = booking.CheckOutDate.DayNumber - booking.CheckInDate.DayNumber;
+        decimal roomTotal = booking.BookingDetails.Sum(d => d.Quantity * d.UnitPrice * nights);
+        decimal paid = booking.Payments.Sum(p => p.Amount);
+        if (roomTotal != quotedRoomTotal || paid != quotedPaid)
+            throw new InvalidOperationException("Room charges or payments changed. Refresh and review the balance again.");
+        decimal remaining = Math.Max(0, roomTotal - paid);
+        if (remaining > 0 && !cashReceived)
+            throw new ArgumentException("Confirm that the full remaining room payment has been received in cash.");
 
         if (selections.Count != booking.BookingDetails.Sum(d => d.Quantity)
             || selections.Any(s => string.IsNullOrWhiteSpace(s.RoomId)))
@@ -110,6 +117,18 @@ public class StayWorkflowService
                 throw new ArgumentException("Select the correct number of rooms for each room type.");
             if (selected.Any(s => !available.Any(r => r.RoomId == s.RoomId && r.RoomTypeId == detail.RoomTypeId)))
                 throw new InvalidOperationException("A selected room is no longer available. Cancel and reopen the form.");
+        }
+        if (remaining > 0)
+        {
+            if (!await db.Paymentmethods.AnyAsync(m => m.MethodId == "PT03"))
+                throw new InvalidOperationException("Cash payment method PT03 is missing from the database.");
+            db.Payments.Add(new Payment
+            {
+                PaymentId = EntityIds.Next(await db.Payments.Select(p => p.PaymentId).ToListAsync(), "PM", 4),
+                BookingId = bookingId, PaymentTime = now, Amount = remaining, MethodId = "PT03",
+                CollectedByEmployee = Session.CurrentAccount!.EmployeeId,
+                Note = "Remaining room charge collected at check-in."
+            });
         }
         // Replace draft assignments only after the whole request is valid.
         foreach (var detail in booking.BookingDetails)
@@ -135,12 +154,12 @@ public class StayWorkflowService
         var booking = await ReadBookingAsync(db, bookingId);
         if (booking.IsDeleted || booking.BookingStatus != "CONFIRMED")
             throw new InvalidOperationException("Only a confirmed booking can be cancelled as a no-show. Refresh the list.");
-        if (_clock() <= CheckInDeadline(booking))
-            throw new InvalidOperationException("The check-in deadline has not passed yet.");
+        if (DateOnly.FromDateTime(_clock()) <= booking.CheckInDate)
+            throw new InvalidOperationException("A booking is a no-show only after its check-in date has passed.");
 
         // Cancellation keeps the booking, payments and room assignments as history.
         booking.BookingStatus = "CANCELLED";
-        booking.CancellationReason = "No-show: check-in deadline expired.";
+        booking.CancellationReason = "No-show: check-in date has passed.";
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
     }

@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     {
         if ((key == "Rooms" || key == "RoomTypes" || key == "RoomStatus") && !_vm.CanViewRooms) return;
         if ((key == "Bookings" || key == "CheckIn" || key == "CheckOut") && !_vm.CanViewBookings) return;
+        if (key == "Revenue" && !_vm.CanManagePricing) return;
         foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton, StayNavButton, RoomStatusNavButton, RoomNavButton, ServiceRequestNavButton,
             FeedbackNavButton, InvoiceNavButton, RevenueNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
         button.Tag = "Selected";

@@ -13,11 +13,11 @@ public class BookingDto
     public DateTime? CheckInDeadline { get; set; }
     public string Status { get; set; } = "";
     public string? CancellationReason { get; set; }
-    // Use the existing database deadline (including its per-booking override).
+    // Check-in is allowed for the entire arrival date, regardless of the time.
     public bool IsCheckInOverdue => Status == "CONFIRMED"
-        && DateTime.Now > (CheckInDeadline ?? CheckInDate.ToDateTime(new TimeOnly(14, 15)));
-    public bool CanCheckIn => Status == "CONFIRMED" && !IsCheckInOverdue
-        && CheckInDate <= DateOnly.FromDateTime(DateTime.Today)
+        && CheckInDate < DateOnly.FromDateTime(DateTime.Today);
+    public bool CanCheckIn => Status == "CONFIRMED"
+        && CheckInDate == DateOnly.FromDateTime(DateTime.Today)
         && CheckOutDate > DateOnly.FromDateTime(DateTime.Today);
     public int NumberOfNights => CheckOutDate.DayNumber - CheckInDate.DayNumber;
     public int TotalRooms => Rooms.Sum(r => r.Quantity);

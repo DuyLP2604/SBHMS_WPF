@@ -19,9 +19,17 @@ public class CheckInViewModel : DatabaseViewModel
     public bool CanOperate => Session.GetRole() == "Staff";
     public string Summary => $"{Bookings.Count} confirmed bookings | Overdue: {Bookings.Count(b => b.IsCheckInOverdue)}";
     public string SelectionHint => SelectedBooking == null ? "Select a booking to see its available actions."
-        : SelectedBooking.IsCheckInOverdue ? "Check-in deadline passed. You can cancel this booking as a no-show."
+        : SelectedBooking.IsCheckInOverdue ? "Check-in date passed. You can cancel this booking as a no-show."
         : !SelectedBooking.CanCheckIn ? "This booking has not reached its check-in date."
-        : "Ready to check in. Click Assign rooms to choose rooms.";
+        : "Ready to check in today. Assign rooms and collect the full remaining room charge.";
+    public decimal AmountDue => Math.Max(0, (SelectedBooking?.RoomSubtotal ?? 0) - (SelectedBooking?.PaidAmount ?? 0));
+    public bool HasAmountDue => AmountDue > 0;
+    private bool _cashReceived;
+    public bool CashReceived
+    {
+        get => _cashReceived;
+        set { SetProperty(ref _cashReceived, value); CommandManager.InvalidateRequerySuggested(); }
+    }
     private BookingDto? _bookingToCancel;
     public BookingDto? BookingToCancel
     {
@@ -51,6 +59,8 @@ public class CheckInViewModel : DatabaseViewModel
             {
                 CloseForm(); BookingToCancel = null;
                 OnPropertyChanged(nameof(SelectionHint));
+                OnPropertyChanged(nameof(AmountDue));
+                OnPropertyChanged(nameof(HasAmountDue));
             }
             CommandManager.InvalidateRequerySuggested();
         }
@@ -75,7 +85,8 @@ public class CheckInViewModel : DatabaseViewModel
         OpenAssignCommand = DatabaseCommand(OpenFormAsync, () => CanOperate && SelectedBooking?.CanCheckIn == true && !IsAssigning && !IsCancelling);
         CancelAssignCommand = new RelayCommand(_ => CloseForm(), _ => !IsBusy);
         CheckInCommand = DatabaseCommand(CheckInAsync, () => CanOperate && SelectedBooking?.CanCheckIn == true && IsAssigning
-            && RoomAssignments.Count > 0 && RoomAssignments.All(r => !string.IsNullOrEmpty(r.SelectedRoomId)));
+            && RoomAssignments.Count > 0 && RoomAssignments.All(r => !string.IsNullOrEmpty(r.SelectedRoomId))
+            && (AmountDue == 0 || CashReceived));
         CancelNoShowCommand = new RelayCommand(item =>
         {
             if (item is not BookingDto booking) return;
@@ -117,7 +128,7 @@ public class CheckInViewModel : DatabaseViewModel
         }
         _formBookingId = booking.BookingId;
         IsAssigning = true;
-        Notify("Choose a different room for each row, then click Check in. Empty lists mean no rooms are available.", "info");
+        Notify("Choose a different room for each row and collect the remaining room charge before checking in.", "info");
     }
 
     private void RoomSelectionChanged(object? sender, PropertyChangedEventArgs e)
@@ -126,6 +137,7 @@ public class CheckInViewModel : DatabaseViewModel
     private void CloseForm()
     {
         IsAssigning = false; _formBookingId = null;
+        CashReceived = false;
         foreach (var row in RoomAssignments) row.PropertyChanged -= RoomSelectionChanged;
         RoomAssignments.Clear();
         CommandManager.InvalidateRequerySuggested();
@@ -142,11 +154,11 @@ public class CheckInViewModel : DatabaseViewModel
 
     private async Task CheckInAsync()
     {
-        if (_formBookingId == null) return;
+        if (_formBookingId == null || SelectedBooking == null) return;
         string id = _formBookingId;
         var selected = RoomAssignments.Select(r => new RoomSelectionDto
         { RoomTypeId = r.RoomTypeId, RoomId = r.SelectedRoomId ?? "" }).ToList();
-        await _stays.CheckInAsync(id, selected);
+        await _stays.CheckInAsync(id, selected, SelectedBooking.RoomSubtotal, SelectedBooking.PaidAmount, CashReceived);
         await LoadDataAsync();
         Notify($"Booking {id} checked in successfully.", "success");
     }
