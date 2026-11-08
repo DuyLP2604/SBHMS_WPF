@@ -30,10 +30,10 @@ public partial class MainWindow : Window
     // Create pages on demand so opening the shell does not query every database table.
     private void Navigate(string key, string title, Button button, Func<UserControl> create)
     {
-        if ((key == "Rooms" || key == "RoomTypes") && !_vm.CanViewRooms) return;
+        if ((key == "Rooms" || key == "RoomTypes" || key == "RoomStatus") && !_vm.CanViewRooms) return;
         if ((key == "Bookings" || key == "CheckIn" || key == "CheckOut") && !_vm.CanViewBookings) return;
-        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton,
-            FeedbackNavButton, InvoiceNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
+        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton, StayNavButton, RoomStatusNavButton, RoomNavButton, ServiceRequestNavButton,
+            FeedbackNavButton, InvoiceNavButton, RevenueNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
         button.Tag = "Selected";
         if (!_pages.TryGetValue(key, out var page)) { page = create(); _pages.Add(key, page); }
         PageHost.Content = page; _vm.PageTitle = title;
@@ -41,6 +41,7 @@ public partial class MainWindow : Window
     private void Customer_Click(object sender, RoutedEventArgs e) => Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
     private void Feedback_Click(object sender, RoutedEventArgs e) => Navigate("Feedback", "Guest feedback", FeedbackNavButton, () => new GuestFeedbackView());
     private void Invoice_Click(object sender, RoutedEventArgs e) => Navigate("Invoices", "Invoices", InvoiceNavButton, () => new InvoiceManager());
+    private void Revenue_Click(object sender, RoutedEventArgs e) => Navigate("Revenue", "Revenue & pricing", RevenueNavButton, () => new RevenueManagementPage());
     private void Bookings_Click(object sender, RoutedEventArgs e) => ShowBookings();
     private void ShowBookings(string? createdId = null)
     {
@@ -68,6 +69,8 @@ public partial class MainWindow : Window
     private void CheckOut_Click(object sender, RoutedEventArgs e)
         => Navigate("CheckOut", "Check-out", CheckOutNavButton, () => new CheckOutView());
     private void Stay_Click(object sender, RoutedEventArgs e) => Navigate("Stays", "Guest stays", StayNavButton, () => new GuestStayView());
+    private void RoomStatus_Click(object sender, RoutedEventArgs e)
+        => Navigate("RoomStatus", "Room status", RoomStatusNavButton, () => new RoomStatusView());
     private void Room_Click(object sender, RoutedEventArgs e) => Navigate("Rooms", "Rooms", RoomNavButton, () => new RoomsView());
     private void ServiceRequest_Click(object sender, RoutedEventArgs e) => Navigate("Services", "Booking services", ServiceRequestNavButton, () => new ServiceRequestsView());
     private void RoomTypes_Click(object sender, RoutedEventArgs e)

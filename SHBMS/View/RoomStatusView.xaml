@@ -1,3 +1,193 @@
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:SHBMS.View" x:Class="SHBMS.View.RoomStatusView">
-    <local:RoomsView/>
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SHBMS.View.RoomStatusView" Background="#F3F6FB" FontFamily="Segoe UI">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ModernStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+            <!-- Small clickable counter that filters the room tiles. -->
+            <Style x:Key="CountChip" TargetType="Button">
+                <Setter Property="Background" Value="White" />
+                <Setter Property="BorderBrush" Value="#DCE5F1" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="16,8" />
+                <Setter Property="Margin" Value="0,0,8,8" />
+                <Setter Property="MinWidth" Value="110" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+
+            <Style TargetType="ListBoxItem" x:Key="TileItem">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <ContentPresenter />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <DataTemplate x:Key="RoomTile">
+                <Border Width="158" Height="108" Margin="5" Padding="12,10" CornerRadius="12">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <!-- Defaults live in the style, because a local value would beat the triggers below. -->
+                            <Setter Property="BorderThickness" Value="2" />
+                            <Setter Property="BorderBrush" Value="#2F9E5B" />
+                            <Setter Property="Background" Value="#E7F6EC" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DisplayStatus}" Value="Occupied">
+                                    <Setter Property="Background" Value="#FDE8E8" />
+                                    <Setter Property="BorderBrush" Value="#D64545" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DisplayStatus}" Value="Reserved">
+                                    <Setter Property="Background" Value="#E3ECFF" />
+                                    <Setter Property="BorderBrush" Value="#4169E1" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DisplayStatus}" Value="Maintenance">
+                                    <Setter Property="Background" Value="#FFF1DB" />
+                                    <Setter Property="BorderBrush" Value="#D98E04" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DisplayStatus}" Value="Inactive">
+                                    <Setter Property="Background" Value="#ECEFF3" />
+                                    <Setter Property="BorderBrush" Value="#8A94A6" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                    <Setter Property="BorderBrush" Value="#13233C" />
+                                    <Setter Property="BorderThickness" Value="4" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Text="{Binding RoomNumber}" FontSize="20" FontWeight="Bold" Foreground="#13233C" />
+                        <TextBlock Text="{Binding RoomTypeName}" FontSize="11" Foreground="#4A5568" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding DisplayStatus}" FontSize="12" FontWeight="SemiBold" Foreground="#13233C" Margin="0,4,0,0" />
+                        <TextBlock Text="{Binding GuestText}" FontSize="11" Foreground="#4A5568" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding DetailText}" FontSize="11" Foreground="#718096" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                    <Setter Property="IsEnabled" Value="False" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+    <Grid Margin="20,16" Visibility="{Binding CanView, Converter={StaticResource BoolToVisibility}}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,12">
+            <TextBlock Text="Room status" FontSize="25" FontWeight="Bold" Foreground="#13233C" />
+            <TextBlock Text="Live occupancy and operational status of every room, read from the database." TextWrapping="Wrap" Foreground="#718096" Margin="0,4,0,0" />
+            <TextBlock Text="{Binding AccessHint}" Foreground="#4169E1" FontSize="12" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <WrapPanel Grid.Row="1">
+            <Button Style="{StaticResource CountChip}" Command="{Binding FilterByCommand}" CommandParameter="All">
+                <StackPanel><TextBlock Text="{Binding TotalCount}" FontSize="22" FontWeight="Bold" Foreground="#13233C" /><TextBlock Text="All rooms" Foreground="#718096" FontSize="12" /></StackPanel>
+            </Button>
+            <Button Style="{StaticResource CountChip}" Command="{Binding FilterByCommand}" CommandParameter="Available" BorderBrush="#2F9E5B">
+                <StackPanel><TextBlock Text="{Binding AvailableCount}" FontSize="22" FontWeight="Bold" Foreground="#2F9E5B" /><TextBlock Text="Available" Foreground="#718096" FontSize="12" /></StackPanel>
+            </Button>
+            <Button Style="{StaticResource CountChip}" Command="{Binding FilterByCommand}" CommandParameter="Occupied" BorderBrush="#D64545">
+                <StackPanel><TextBlock Text="{Binding OccupiedCount}" FontSize="22" FontWeight="Bold" Foreground="#D64545" /><TextBlock Text="Occupied" Foreground="#718096" FontSize="12" /></StackPanel>
+            </Button>
+            <Button Style="{StaticResource CountChip}" Command="{Binding FilterByCommand}" CommandParameter="Reserved" BorderBrush="#4169E1">
+                <StackPanel><TextBlock Text="{Binding ReservedCount}" FontSize="22" FontWeight="Bold" Foreground="#4169E1" /><TextBlock Text="Reserved today" Foreground="#718096" FontSize="12" /></StackPanel>
+            </Button>
+            <Button Style="{StaticResource CountChip}" Command="{Binding FilterByCommand}" CommandParameter="Maintenance" BorderBrush="#D98E04">
+                <StackPanel><TextBlock Text="{Binding MaintenanceCount}" FontSize="22" FontWeight="Bold" Foreground="#D98E04" /><TextBlock Text="Maintenance" Foreground="#718096" FontSize="12" /></StackPanel>
+            </Button>
+            <Button Style="{StaticResource CountChip}" Command="{Binding FilterByCommand}" CommandParameter="Inactive" BorderBrush="#8A94A6">
+                <StackPanel><TextBlock Text="{Binding InactiveCount}" FontSize="22" FontWeight="Bold" Foreground="#8A94A6" /><TextBlock Text="Inactive" Foreground="#718096" FontSize="12" /></StackPanel>
+            </Button>
+        </WrapPanel>
+
+        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
+            <WrapPanel VerticalAlignment="Center">
+                <StackPanel Margin="0,0,8,0">
+                    <TextBlock Text="SEARCH" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Room number, type, guest or booking" Width="200" />
+                </StackPanel>
+                <StackPanel Margin="0,0,8,0">
+                    <TextBlock Text="STATUS" Style="{StaticResource FieldLabel}" />
+                    <ComboBox ItemsSource="{Binding FilterStatuses}" SelectedItem="{Binding FilterStatus, Mode=TwoWay}" Width="140" Height="39" Padding="8,0" VerticalContentAlignment="Center" />
+                </StackPanel>
+                <Button Content="Reset" Command="{Binding ResetFiltersCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8" VerticalAlignment="Bottom" />
+                <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8" VerticalAlignment="Bottom" />
+                <CheckBox Content="Auto refresh (30 s)" IsChecked="{Binding AutoRefresh, Mode=TwoWay}" VerticalAlignment="Bottom" Margin="8,0,12,10" />
+                <TextBlock Text="{Binding LastUpdated}" Foreground="#718096" VerticalAlignment="Bottom" Margin="0,0,12,10" />
+                <TextBlock Text="{Binding OccupancyText}" Foreground="#13233C" FontWeight="SemiBold" VerticalAlignment="Bottom" Margin="0,0,0,10" />
+            </WrapPanel>
+        </Border>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="290" />
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Card}" Padding="10">
+                <ListBox ItemsSource="{Binding RoomsView}" SelectedItem="{Binding SelectedRoom, Mode=TwoWay}"
+                         ItemTemplate="{StaticResource RoomTile}" ItemContainerStyle="{StaticResource TileItem}"
+                         BorderThickness="0" Background="Transparent"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Room details" Style="{StaticResource SectionTitle}" Margin="0,0,0,10" />
+                    <TextBlock Text="Select a room tile to see details." Foreground="#718096" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasSelection}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="ROOM" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding SelectedRoom.RoomNumber}" FontSize="20" FontWeight="Bold" Foreground="#13233C" />
+                        <TextBlock Text="{Binding SelectedRoom.RoomTypeName}" Foreground="#718096" />
+                        <TextBlock Text="CURRENT STATE" Style="{StaticResource FieldLabel}" Margin="0,12,0,4" />
+                        <TextBlock Text="{Binding SelectedRoom.DisplayStatus}" Foreground="#13233C" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="GUEST" Style="{StaticResource FieldLabel}" Margin="0,12,0,4" />
+                        <TextBlock Text="{Binding SelectedRoom.GuestText}" Foreground="#13233C" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding SelectedRoom.BookingId, StringFormat=Booking {0}}" Foreground="#718096" />
+                        <TextBlock Text="{Binding SelectedRoom.DetailText}" Foreground="#718096" />
+                        <StackPanel Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="OPERATIONAL STATUS" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+                            <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" Height="39" Padding="8,0" VerticalContentAlignment="Center" />
+                            <Button Content="Update status" Command="{Binding UpdateStatusCommand}" Style="{StaticResource PrimaryButton}" Margin="0,12,0,0" Padding="14,8" HorizontalAlignment="Left" />
+                            <TextBlock Text="A room with a guest in house or an upcoming stay cannot be set to Maintenance or Inactive." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>
