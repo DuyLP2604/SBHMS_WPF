@@ -1,37 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
-
-namespace SHBMS.Helper
+namespace SHBMS.Helper;
+public class RelayCommand : ICommand
 {
-    public class RelayCommand : ICommand
+    private readonly Action<object?> _execute;
+    private readonly Predicate<object?>? _canExecute;
+    public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
+    { _execute = execute; _canExecute = canExecute; }
+    public event EventHandler? CanExecuteChanged
     {
-        private readonly Action<object> execute;
-        private readonly Func<object, bool> canExecute;
-
-        public event EventHandler CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
-
-        public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
-        {
-            this.execute = execute;
-            this.canExecute = canExecute;
-        }
-
-        public bool CanExecute(object parameter)
-        {
-            return canExecute == null || canExecute(parameter);
-        }
-
-        public void Execute(object parameter)
-        {
-            execute(parameter);
-        }
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
     }
+    public bool CanExecute(object? parameter) => _canExecute?.Invoke(parameter) ?? true;
+    public void Execute(object? parameter) { if (CanExecute(parameter)) _execute(parameter); }
 }

@@ -1,11 +1,11 @@
-﻿namespace SBHMS.DTO.Guest;
+namespace SHBMS.DTO.Guest;
 
 public class CheckInDto
 {
-    public int? BookingId { get; set; }
-    public int CustomerId { get; set; }
-    public int RoomId { get; set; }
+    public string? BookingId { get; set; }
+    public string CustomerId { get; set; } = "";
+    public string RoomId { get; set; } = "";
     public DateTime CheckInTime { get; set; }
     public DateTime ExpectedCheckOutTime { get; set; }
-    public int StaffId { get; set; }
+    public string StaffId { get; set; } = "";
 }

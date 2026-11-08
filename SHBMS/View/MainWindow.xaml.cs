@@ -1,124 +1,67 @@
+using SHBMS.Helper;
 using SHBMS.ViewModel;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-
-namespace SHBMS.View
+namespace SHBMS.View;
+public partial class MainWindow : Window
 {
-    public partial class MainWindow : Window
+    private readonly MainWindowViewModel _vm = new();
+    private readonly Dictionary<string, UserControl> _pages = new();
+    public MainWindow()
     {
-        private readonly CustomerProfilesView _customers = new();
-        private readonly GuestFeedbackView _feedback = new();
-        private readonly InvoiceManager _invoiceManager = new();
-        private readonly GuestStayView _stays = new();
-        private readonly RoomStatusView _rooms = new();
-        private readonly ServiceRequestsView _serviceRequests = new();
-        private readonly PromotionsPricingView _promotionsPricing = new();
-
-
-        private readonly StaffAccountView _staffAccounts = new();
-
-        public MainWindow()
+        InitializeComponent(); DataContext = _vm;
+        Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
+    }
+    // Navigation is view behavior. Each page owns its own data ViewModel.
+    // Create pages on demand so opening the shell does not query every database table.
+    private void Navigate(string key, string title, Button button, Func<UserControl> create)
+    {
+        if ((key == "Rooms" || key == "RoomTypes") && !_vm.CanViewRooms) return;
+        if (key == "Bookings" && !_vm.CanViewBookings) return;
+        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton,
+            FeedbackNavButton, InvoiceNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
+        button.Tag = "Selected";
+        if (!_pages.TryGetValue(key, out var page)) { page = create(); _pages.Add(key, page); }
+        PageHost.Content = page; _vm.PageTitle = title;
+    }
+    private void Customer_Click(object sender, RoutedEventArgs e) => Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
+    private void Feedback_Click(object sender, RoutedEventArgs e) => Navigate("Feedback", "Guest feedback", FeedbackNavButton, () => new GuestFeedbackView());
+    private void Invoice_Click(object sender, RoutedEventArgs e) => Navigate("Invoices", "Invoices", InvoiceNavButton, () => new InvoiceManager());
+    private void Bookings_Click(object sender, RoutedEventArgs e) => ShowBookings();
+    private void ShowBookings(string? createdId = null)
+    {
+        if (!_vm.CanViewBookings) return;
+        if (createdId != null && _pages.TryGetValue("Bookings", out var existing) && existing is BookingsView list)
+            list.ShowCreatedBooking(createdId);
+        Navigate("Bookings", "Bookings", BookingNavButton, () =>
         {
-            InitializeComponent();
-            ShowCustomerPage();
-        } 
-        private void Navigate(
-            object page,
-            Button navButton,
-            string pageKey,
-            string breadcrumb)
-        {
-            ResetNavigation();
-            navButton.Tag = "Selected";
-        }
-
-        private void ResetNavigation()
-        {
-            CustomerNavButton.Tag = null;
-            FeedbackNavButton.Tag = null;
-            InvoiceNavButton.Tag = null;
-            StayNavButton.Tag = null;
-            RoomNavButton.Tag = null;
-            ServiceRequestNavButton.Tag = null;
-            PromotionsPricingNavButton.Tag = null;
-
-            StaffNavButton.Tag = null;
-        }
-
-        private void Customer_Click(object sender, RoutedEventArgs e)
-        {
-            ShowCustomerPage();
-        }
-
-        private void ShowCustomerPage()
-        {
-            Navigate(
-                _customers,
-                CustomerNavButton,
-                "Customers",
-                "Hotel operations / Guest relations");
-        }
-
-        private void Feedback_Click(object sender, RoutedEventArgs e)
-        {
-            Navigate(
-                _feedback,
-                FeedbackNavButton,
-                "Feedback",
-                "Hotel operations / Guest relations");
-        }
-
-        private void Invoice_Click(object sender, RoutedEventArgs e)
-        {
-            Navigate(
-                _invoiceManager,
-                InvoiceNavButton,
-                "Invoices",
-                "Hotel operations / Invoice management");
-        }
-
-        private void Stay_Click(object sender, RoutedEventArgs e)
-        {
-            Navigate(
-                _stays,
-                StayNavButton,
-                "GuestStays",
-                "Hotel operations / Front desk");
-        }
-
-        private void Room_Click(object sender, RoutedEventArgs e)
-        {
-            Navigate(
-                _rooms,
-                RoomNavButton,
-                "RoomStatus",
-                "Hotel operations / Rooms");
-        }
-        private void ServiceRequest_Click( object sender,RoutedEventArgs e)
-        {
-            Navigate(
-                _serviceRequests,
-                ServiceRequestNavButton,
-                "ServiceRequests",
-                "Hotel operations / Service Requests");
-        }
-        private void PromotionsPricing_Click(
-            object sender,
-            RoutedEventArgs e)
-        {
-            Navigate(
-                _promotionsPricing,
-                PromotionsPricingNavButton,
-                "PromotionsPricing",
-                "Booking management / Promotions & Pricing"
-            );
-        }
-
-
-        private void Staff_Click(object sender, RoutedEventArgs e)
-        {
-            Navigate(_staffAccounts, StaffNavButton, "StaffAccounts", "Hotel operations / System administration");
-        }
+            var page = new BookingsView();
+            page.NewBookingRequested += ShowCreateBooking;
+            if (createdId != null) page.ShowCreatedBooking(createdId);
+            return page;
+        });
+    }
+    private void ShowCreateBooking()
+    {
+        if (Session.GetRole() != "Staff") return;
+        var page = new CreateBookingView();
+        page.BackRequested += () => ShowBookings();
+        page.BookingCreated += id => ShowBookings(id);
+        PageHost.Content = page; _vm.PageTitle = "New booking";
+    }
+    private void Stay_Click(object sender, RoutedEventArgs e) => Navigate("Stays", "Guest stays", StayNavButton, () => new GuestStayView());
+    private void Room_Click(object sender, RoutedEventArgs e) => Navigate("Rooms", "Rooms", RoomNavButton, () => new RoomsView());
+    private void ServiceRequest_Click(object sender, RoutedEventArgs e) => Navigate("Services", "Booking services", ServiceRequestNavButton, () => new ServiceRequestsView());
+    private void RoomTypes_Click(object sender, RoutedEventArgs e)
+        => Navigate("RoomTypes", "Room types", RoomTypeNavButton, () => new RoomTypesView());
+    private void Staff_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_vm.IsAdmin) return;
+        Navigate("Staff", "Staff accounts", StaffNavButton, () => new StaffAccountView());
+    }
+    private void SignOut_Click(object sender, RoutedEventArgs e)
+    {
+        Session.Clear();
+        var login = new LoginView(); Application.Current.MainWindow = login; login.Show(); Close();
     }
 }

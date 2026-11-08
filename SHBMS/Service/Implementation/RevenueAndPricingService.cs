@@ -1,12 +1,13 @@
-﻿using SBHMS.DTO.Revenue;
-using SBHMS.Services.Interfaces;
+using SHBMS.Model;
+using SHBMS.DTO.Revenue;
+using SHBMS.Service.Interface;
 
-namespace SBHMS.Services.Implementations
+namespace SHBMS.Service.Implementation
 {
     public class RevenueAndPricingService : IRevenueAndPricingService
     {
-        private readonly PRN212_SBHMSContext _context;
-        public RevenueAndPricingService(PRN212_SBHMSContext context) { _context = context; }
+        private readonly Prn212SbhmsContext _context;
+        public RevenueAndPricingService(Prn212SbhmsContext context) { _context = context; }
 
         public Task<RevenueReportDto> GetDailyRevenueReportAsync(DateTime date) => throw new NotImplementedException();
         public Task<RevenueReportDto> GetMonthlyRevenueReportAsync(int year, int month) => throw new NotImplementedException();

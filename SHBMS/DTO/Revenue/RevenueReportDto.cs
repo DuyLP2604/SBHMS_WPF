@@ -1,4 +1,4 @@
-﻿namespace SBHMS.DTO.Revenue;
+namespace SHBMS.DTO.Revenue;
 
 public class RevenueReportDto
 {

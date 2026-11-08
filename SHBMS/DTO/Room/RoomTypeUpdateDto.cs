@@ -1,10 +1,5 @@
-﻿namespace SBHMS.DTO.Room;
-
-public class RoomTypeUpdateDto
+namespace SHBMS.DTO.Room;
+public class RoomTypeUpdateDto : RoomTypeCreateDto
 {
-    public int RoomTypeId { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public decimal BasePrice { get; set; }
-    public int Capacity { get; set; }
+    public string RoomTypeId { get; set; } = "";
 }

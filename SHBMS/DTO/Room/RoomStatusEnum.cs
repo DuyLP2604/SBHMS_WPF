@@ -1,4 +1,4 @@
-﻿namespace SBHMS.DTO.Room;
+namespace SHBMS.DTO.Room;
 
 public enum RoomStatusEnum
 {

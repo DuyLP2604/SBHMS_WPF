@@ -1,4 +1,5 @@
-﻿namespace SBHMS.Services.Interfaces
+using SHBMS.DTO.Auth;
+namespace SHBMS.Service.Interface
 {
     public interface IStaffAccountService
     {

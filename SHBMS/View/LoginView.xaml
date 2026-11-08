@@ -32,17 +32,17 @@
 
                 <!-- Username -->
                 <TextBlock Text="USERNAME" Style="{StaticResource FieldLabel}"/>
-                <TextBox x:Name="TxtUsername" Height="40" Margin="0,0,0,16" VerticalContentAlignment="Center"/>
+                <TextBox x:Name="TxtUsername" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"  Height="40" Margin="0,0,0,16" VerticalContentAlignment="Center"/>
 
                 <!-- Password -->
                 <TextBlock Text="PASSWORD" Style="{StaticResource FieldLabel}"/>
-                <PasswordBox x:Name="TxtPassword" Height="40" Margin="0,0,0,12" VerticalContentAlignment="Center" Padding="12,0" Background="#F9FBFE" BorderBrush="#DCE5F1" BorderThickness="1" Foreground="#13233C" FontSize="13"/>
+                <PasswordBox x:Name="TxtPassword" PasswordChanged="TxtPassword_PasswordChanged" Height="40" Margin="0,0,0,12" VerticalContentAlignment="Center" Padding="12,0" Background="#F9FBFE" BorderBrush="#DCE5F1" BorderThickness="1" Foreground="#13233C" FontSize="13"/>
 
                 <!-- Error attribute -->
-                <TextBlock x:Name="TxtError" Foreground="#C24154" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,14" TextWrapping="Wrap" TextAlignment="Center" MinHeight="16"/>
+                <TextBlock x:Name="TxtError" Text="{Binding ErrorMessage}" Foreground="#C24154" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,14" TextWrapping="Wrap" TextAlignment="Center" MinHeight="16"/>
 
                 <!-- Login -->
-                <Button Content="Sign In" Click="BtnLogin_Click" Style="{StaticResource PrimaryButton}" Height="42" FontSize="14" FontWeight="SemiBold"/>
+                <Button Content="Sign In" Command="{Binding LoginCommand}" Style="{StaticResource PrimaryButton}" Height="42" FontSize="14" FontWeight="SemiBold"/>
             </StackPanel>
         </Border>
     </Grid>

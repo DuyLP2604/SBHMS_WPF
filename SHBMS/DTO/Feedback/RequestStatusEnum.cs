@@ -1,4 +1,4 @@
-﻿namespace SBHMS.DTO
+namespace SHBMS.DTO
 {
     public enum RequestStatusEnum
     {

@@ -1,91 +1,27 @@
-﻿<UserControl x:Class="SHBMS.View.InvoiceManager"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="#F3F6FB" Width="884">
+<UserControl x:Class="SHBMS.View.InvoiceManager"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="#F3F6FB" FontFamily="Segoe UI">
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                    <Setter Property="IsEnabled" Value="False" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
 
-    <Grid Margin="20">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="6*" />
-            <ColumnDefinition Width="4*" />
-        </Grid.ColumnDefinitions>
-
-        <!-- List of invoice -->
-        <Grid Grid.Column="0" Background="White" Margin="0,0,10,0">
-            <StackPanel Margin="15">
-                <TextBlock Text="Recent Invoices" FontSize="20" FontWeight="Bold" Foreground="#153355" Margin="0,0,0,15"/>
-
-                <DataGrid x:Name="InvoiceGrid" AutoGenerateColumns="False" IsReadOnly="True" 
-                          SelectionMode="Single" HeadersVisibility="Column" 
-                          Background="#153355" BorderBrush="#153355" 
-                          SelectionChanged="InvoiceGrid_SelectionChanged">
-
-                    <!-- Title Style -->
-                    <DataGrid.ColumnHeaderStyle>
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="#97A4B3"/>
-                            <Setter Property="Foreground" Value="White"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="Padding" Value="10,8"/>
-                        </Style>
-                    </DataGrid.ColumnHeaderStyle>
-
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Booking ID" Binding="{Binding StayId}" Width="100"/>
-                        <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="*"/>
-                        <DataGridTextColumn Header="Room" Binding="{Binding RoomNumber}" Width="80"/>
-                        <DataGridTextColumn Header="Total Amount" Binding="{Binding TotalAmount, StringFormat=\{0:C\}}" Width="120"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </StackPanel>
-        </Grid>
-
-        <!-- Invoice Details -->
-        <Grid Grid.Column="1" Background="White" Margin="10,0,0,0">
-            <StackPanel Margin="20">
-                <TextBlock Text="Invoice Details" FontSize="20" FontWeight="Bold" Foreground="#1A3B5C" Margin="0,0,0,20"/>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Booking ID" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtBookingId" Text="--" FontSize="15" FontWeight="SemiBold"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Invoice ID" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtInvoiceId" Text="--" FontSize="15" FontWeight="SemiBold"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Created Date" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtCreatedDate" Text="--" FontSize="15" FontWeight="SemiBold"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Customer Name" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtCustomerName" Text="--" FontSize="15" FontWeight="SemiBold"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Room" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtRoomNumber" Text="--" FontSize="15" FontWeight="SemiBold"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Stay Period" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtStayPeriod" Text="--" FontSize="15" FontWeight="SemiBold"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="Services Used" FontSize="12" Foreground="Gray"/>
-                    <TextBlock x:Name="txtServices" Text="--" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                </StackPanel>
-
-                <Separator Margin="0,15,0,15"/>
-
-                <StackPanel>
-                    <TextBlock Text="TOTAL AMOUNT" FontSize="14" Foreground="Gray"/>
-                    <TextBlock x:Name="txtTotalAmount" Text="$0.00" FontSize="24" FontWeight="Bold" Foreground="#28A745"/>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
-    </Grid>
-</UserControl>
+<UserControl.Resources><ResourceDictionary Source="ModernStyles.xaml" /></UserControl.Resources>
+<Grid Margin="20,16">
+<Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+<StackPanel Margin="0,0,0,12">
+<TextBlock Text="Invoices" FontSize="25" FontWeight="Bold" Foreground="#13233C" />
+<TextBlock Text="View invoices stored in the database." TextWrapping="Wrap" Foreground="#718096" Margin="0,5,0,0" />
+<TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="#B45309" Margin="0,6,0,0" />
+</StackPanel>
+<WrapPanel Grid.Row="1" Margin="0,0,0,12"><Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" /></WrapPanel>
+<Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="1.8*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*" MinWidth="235"/></Grid.ColumnDefinitions>
+<Border Style="{StaticResource Card}" Padding="12"><DataGrid ItemsSource="{Binding Invoices}" SelectedItem="{Binding SelectedInvoice}" CanUserReorderColumns="False" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+<DataGrid.Columns><DataGridTextColumn Header="INVOICE" Binding="{Binding InvoiceId}" Width="95" MinWidth="85" /><DataGridTextColumn Header="BOOKING" Binding="{Binding BookingId}" Width="95" MinWidth="85" /><DataGridTextColumn Header="CUSTOMER" Binding="{Binding Booking.Customer.FullName}" Width="*" MinWidth="85" /><DataGridTextColumn Header="TOTAL" Binding="{Binding TotalAmount}" Width="120" MinWidth="85" /></DataGrid.Columns></DataGrid></Border>
+<Border Grid.Column="2" Style="{StaticResource Card}" Padding="16"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel><TextBlock Text="INVOICE" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding SelectedInvoice.InvoiceId}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="BOOKING" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding SelectedInvoice.BookingId}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="ISSUED AT" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding SelectedInvoice.InvoiceDate}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="CUSTOMER" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding SelectedInvoice.Booking.Customer.FullName}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="ROOMS" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding RoomText}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="STAY PERIOD" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding StayPeriod}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="SERVICES" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding ServiceText}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /><TextBlock Text="TOTAL AMOUNT" Style="{StaticResource FieldLabel}" Margin="0,10,0,4" /><TextBlock Text="{Binding SelectedInvoice.TotalAmount}" TextWrapping="Wrap" Foreground="#13233C" FontSize="14" /></StackPanel></ScrollViewer></Border></Grid>
+</Grid></UserControl>

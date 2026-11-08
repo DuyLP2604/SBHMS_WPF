@@ -1,4 +1,5 @@
-﻿namespace SBHMS.Services.Interfaces
+using SHBMS.DTO;
+namespace SHBMS.Service.Interface
 {
     public interface IFeedbackAndRequestService
     {
@@ -7,7 +8,7 @@
         Task<bool> UpdateRequestStatusAsync(int requestId, RequestStatusEnum status);
 
         // [UC-23] Resolve Guest Feedback (Staff)
-        Task<bool> SubmitGuestFeedbackResolutionAsync(int feedbackId, string resolutionDetails, int staffId);
+        Task<bool> SubmitGuestFeedbackResolutionAsync(int feedbackId, string resolutionDetails, string staffId);
 
         // [UC-24] Review Guest Feedback (Manager)
         Task<IEnumerable<GuestFeedbackDto>> GetAllGuestFeedbacksAsync();

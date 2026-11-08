@@ -1,4 +1,5 @@
-﻿namespace SBHMS.Services.Interfaces
+using SHBMS.DTO.Revenue;
+namespace SHBMS.Service.Interface
 {
     public interface IRevenueAndPricingService
     {

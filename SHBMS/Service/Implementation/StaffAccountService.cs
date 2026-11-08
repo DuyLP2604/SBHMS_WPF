@@ -1,12 +1,13 @@
-﻿using SBHMS.DTO.Auth;
-using SBHMS.Services.Interfaces;
+using SHBMS.Model;
+using SHBMS.DTO.Auth;
+using SHBMS.Service.Interface;
 
-namespace SBHMS.Services.Implementations
+namespace SHBMS.Service.Implementation
 {
     public class StaffAccountService : IStaffAccountService
     {
-        private readonly PRN212_SBHMSContext _context;
-        public StaffAccountService(PRN212_SBHMSContext context) { _context = context; }
+        private readonly Prn212SbhmsContext _context;
+        public StaffAccountService(Prn212SbhmsContext context) { _context = context; }
 
         public Task<IEnumerable<AccountDto>> GetAllStaffAccountsAsync() => throw new NotImplementedException();
         public Task<AccountDto> GetStaffAccountByIdAsync(int accountId) => throw new NotImplementedException();

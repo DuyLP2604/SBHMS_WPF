@@ -1,4 +1,4 @@
-﻿using SBHMS.DTO;
+using SHBMS.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +7,11 @@ namespace SHBMS.DTO.Invoice;
 
 public class InvoiceDto
 {
-    public int InvoiceId { get; set; }
-    public int StayId { get; set; }
+    public string InvoiceId { get; set; } = "";
+    public string StayId { get; set; } = "";
 
-    public string CustomerName { get; set; }
-    public string RoomNumber { get; set; }
+    public string CustomerName { get; set; } = "";
+    public string RoomNumber { get; set; } = "";
 
     public decimal RoomCharge { get; set; }
     public decimal ServiceCharge { get; set; }
