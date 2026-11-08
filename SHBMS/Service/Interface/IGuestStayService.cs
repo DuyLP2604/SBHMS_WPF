@@ -4,6 +4,9 @@ namespace SHBMS.Service.Interface
 {
     public interface IGuestStayService
     {
+        // [FE-02] Guest stays (bookings with rooms, services and payments) read from the database.
+        Task<List<GuestStayDto>> GetStaysAsync();
+
         // [UC-07] Check In Guest
         Task<bool> CheckInGuestAsync(CheckInDto dto);
 
