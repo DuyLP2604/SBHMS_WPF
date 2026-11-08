@@ -115,7 +115,7 @@ public class RoomsViewModel : DatabaseViewModel
     {
         if (!CanManage) throw new UnauthorizedAccessException("Only Manager can add rooms.");
         await _service.CreateRoomAsync(FormData());
-        await LoadDataAsync(); StatusMessage = "Room added.";
+        await LoadDataAsync(); Notify("Room added.", "success");
     }
     private async Task UpdateAsync()
     {
@@ -123,7 +123,7 @@ public class RoomsViewModel : DatabaseViewModel
         if (SelectedRoom == null) return;
         await _service.UpdateRoomAsync(new RoomUpdateDto
         { RoomId = SelectedRoom.RoomId, RoomNumber = RoomNumber, RoomTypeId = SelectedRoomTypeId, Status = SelectedStatus, RoomImage = ImagePath });
-        await LoadDataAsync(); StatusMessage = "Room updated.";
+        await LoadDataAsync(); Notify("Room updated.", "success");
     }
     private async Task DeleteAsync()
     {
@@ -132,7 +132,7 @@ public class RoomsViewModel : DatabaseViewModel
         if (MessageBox.Show($"Delete room {SelectedRoom.RoomNumber}?", "Delete room", MessageBoxButton.YesNo,
             MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await _service.DeleteRoomAsync(SelectedRoom.RoomId);
-        await LoadDataAsync(); StatusMessage = "Room deleted.";
+        await LoadDataAsync(); Notify("Room deleted.", "success");
     }
     private void ChooseImage()
     {
@@ -140,6 +140,6 @@ public class RoomsViewModel : DatabaseViewModel
         var dialog = new OpenFileDialog { Filter = "Images (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp" };
         if (dialog.ShowDialog() != true) return;
         try { ImagePath = RoomImageStorage.Import(dialog.FileName, "rooms"); }
-        catch (Exception ex) { StatusMessage = ex.Message; }
+        catch (Exception ex) { Notify(ex.Message, "error"); }
     }
 }

@@ -127,9 +127,13 @@ public class RoomService : IRoomService
     {
         ValidateRoomType(dto);
         await CheckTypeNameAsync(db, dto.Name, null);
+        var existingIds = await db.RoomTypes.Select(r => r.RoomTypeId).ToListAsync();
+        string roomTypeId = new[] { "RT01", "RT02", "RT03", "RT04" }
+            .FirstOrDefault(id => !existingIds.Contains(id))
+            ?? throw new InvalidOperationException("Only four room types are used: RT01 to RT04. Select an existing type to update it.");
         db.RoomTypes.Add(new RoomType
         {
-            RoomTypeId = EntityIds.Next(await db.RoomTypes.Select(r => r.RoomTypeId).ToListAsync(), "RT", 2),
+            RoomTypeId = roomTypeId,
             TypeName = dto.Name.Trim(), Capacity = dto.Capacity, Price = dto.BasePrice,
             Description = EntityIds.Optional(dto.Description), RoomTypeImage = EntityIds.Optional(dto.RoomTypeImage)
         });

@@ -42,7 +42,7 @@ public class BookingService : IBookingService
         await VerifyBookingViewerAsync(db);
         return await db.Customers.AsNoTracking().Where(c => c.Phone.Contains(keyword)).OrderBy(c => c.FullName)
             .Select(c => new BookingCustomerDto { CustomerId = c.CustomerId, FullName = c.FullName, Phone = c.Phone,
-                IdentityNumber = c.IdentityNumber, Email = c.Email, Address = c.Address, NationalityName = c.NationalityName }).ToListAsync();
+                IdentityNumber = c.IdentityNumber, Email = c.Email, Address = c.Address, NationalityName = c.Nationality == null ? null : c.Nationality.NationalityName }).ToListAsync();
     }
     public async Task<List<AvailableRoomTypeDto>> GetAvailableRoomTypesAsync(DateOnly arrival, DateOnly departure)
     {
@@ -142,11 +142,16 @@ public class BookingService : IBookingService
             string? identity = EntityIds.Optional(form.IdentityNumber);
             if (identity != null && await db.Customers.AnyAsync(c => c.IdentityNumber == identity))
                 throw new InvalidOperationException("Identity number already exists. Select the existing customer.");
+            string? nationName = EntityIds.Optional(form.NationalityName);
+            var nationality = nationName == null ? null : await db.Nationalities
+                .SingleOrDefaultAsync(n => n.NationalityName == nationName);
+            if (nationName != null && nationality == null)
+                throw new ArgumentException("Select a nationality from the list.");
             customer = new Customer {
                 CustomerId = EntityIds.Next(await db.Customers.Select(c => c.CustomerId).ToListAsync(), "CUS", 3),
                 FullName = form.FullName.Trim(), Phone = form.Phone.Trim(), IdentityNumber = identity,
                 Email = EntityIds.Optional(form.Email), Address = EntityIds.Optional(form.Address),
-                NationalityName = EntityIds.Optional(form.NationalityName)
+                NationalityId = nationality?.NationalityId
             };
         }
         var booking = new Booking {

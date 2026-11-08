@@ -23,6 +23,8 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<Customer> Customers { get; set; }
 
+    public virtual DbSet<Nationality> Nationalities { get; set; }
+
     public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<Invoice> Invoices { get; set; }
@@ -227,10 +229,30 @@ public partial class Prn212SbhmsContext : DbContext
             entity.Property(e => e.IdentityNumber)
                 .HasMaxLength(20)
                 .IsUnicode(false);
-            entity.Property(e => e.NationalityName).HasMaxLength(50);
+            entity.Property(e => e.NationalityId)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("NationalityID");
+            entity.HasIndex(e => e.NationalityId, "IX_CUSTOMER_NationalityID");
+            entity.HasOne(d => d.Nationality).WithMany(p => p.Customers)
+                .HasForeignKey(d => d.NationalityId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CUSTOMER_NATIONALITY");
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Nationality>(entity =>
+        {
+            entity.ToTable("NATIONALITY");
+            entity.HasKey(e => e.NationalityId);
+            entity.Property(e => e.NationalityId)
+                .HasMaxLength(3).IsUnicode(false).IsFixedLength()
+                .HasColumnName("NationalityID");
+            entity.Property(e => e.NationalityName).HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.NationalityName, "UQ_NATIONALITY_Name").IsUnique();
         });
 
         modelBuilder.Entity<Employee>(entity =>

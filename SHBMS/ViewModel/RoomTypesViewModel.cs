@@ -16,7 +16,7 @@ public class RoomTypesViewModel : DatabaseViewModel
     public bool CanView => Session.CanViewRooms;
     public bool CanManage => Session.IsManager;
     public bool IsReadOnly => !CanManage;
-    public string AccessHint => CanManage ? "Manager access: manage room types and nightly prices." : "View access: search, filter and select a room type to see its details.";
+    public string AccessHint => CanManage ? "Manager access: update the four room types RT01 to RT04 and their nightly prices." : "View access: search, filter and select a room type to see its details.";
     public string FormTitle => CanManage && SelectedRoomType == null ? "New room type" : "Room type details";
     public string Summary => $"{RoomTypesView.Cast<object>().Count()} of {RoomTypes.Count} room types";
     private string _roomTypeId = "";
@@ -77,7 +77,7 @@ public class RoomTypesViewModel : DatabaseViewModel
                 || Contains(r.Name, SearchText.Trim()) || Contains(r.Description, SearchText.Trim()));
         RoomTypesView.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
         NewCommand = new RelayCommand(_ => SelectedRoomType = null, _ => CanManage && !IsBusy);
-        AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoomType == null);
+        AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoomType == null && RoomTypes.Count < 4);
         UpdateCommand = DatabaseCommand(UpdateAsync, () => CanManage && SelectedRoomType != null);
         DeleteCommand = DatabaseCommand(DeleteAsync, () => CanManage && SelectedRoomType != null);
         SearchCommand = new RelayCommand(_ => ApplyFilters(), _ => !IsBusy);
@@ -103,17 +103,17 @@ public class RoomTypesViewModel : DatabaseViewModel
         if (!string.IsNullOrWhiteSpace(MinimumCapacityText))
         {
             if (!int.TryParse(MinimumCapacityText, out int value) || value < 1)
-            { StatusMessage = "Minimum capacity must be a positive integer."; return; }
+            { Notify("Minimum capacity must be a positive integer.", "warning"); return; }
             capacity = value;
         }
         if (!string.IsNullOrWhiteSpace(MaximumPriceText))
         {
             if (!decimal.TryParse(MaximumPriceText, out decimal value) || value <= 0)
-            { StatusMessage = "Maximum price must be a positive number."; return; }
+            { Notify("Maximum price must be a positive number.", "warning"); return; }
             price = value;
         }
         _minimumCapacity = capacity; _maximumPrice = price;
-        RoomTypesView.Refresh(); StatusMessage = "";
+        RoomTypesView.Refresh();
     }
     private RoomTypeCreateDto FormData()
     {
@@ -126,7 +126,7 @@ public class RoomTypesViewModel : DatabaseViewModel
     {
         if (!CanManage) throw new UnauthorizedAccessException("Only Manager can add room types.");
         await _service.CreateRoomTypeAsync(FormData());
-        await LoadDataAsync(); StatusMessage = "Room type added.";
+        await LoadDataAsync(); Notify("Room type added.", "success");
     }
     private async Task UpdateAsync()
     {
@@ -136,7 +136,7 @@ public class RoomTypesViewModel : DatabaseViewModel
         await _service.UpdateRoomTypeAsync(new RoomTypeUpdateDto { RoomTypeId = SelectedRoomType.RoomTypeId,
             Name = form.Name, Capacity = form.Capacity, BasePrice = form.BasePrice,
             Description = form.Description, RoomTypeImage = form.RoomTypeImage });
-        await LoadDataAsync(); StatusMessage = "Room type updated. Existing booking prices are preserved.";
+        await LoadDataAsync(); Notify("Room type updated. Existing booking prices are preserved.", "success");
     }
     private async Task DeleteAsync()
     {
@@ -145,7 +145,7 @@ public class RoomTypesViewModel : DatabaseViewModel
         if (MessageBox.Show($"Delete room type {SelectedRoomType.Name}?", "Delete room type", MessageBoxButton.YesNo,
             MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await _service.DeleteRoomTypeAsync(SelectedRoomType.RoomTypeId);
-        await LoadDataAsync(); StatusMessage = "Room type deleted.";
+        await LoadDataAsync(); Notify("Room type deleted.", "success");
     }
     private void ChooseImage()
     {
@@ -153,6 +153,6 @@ public class RoomTypesViewModel : DatabaseViewModel
         var dialog = new OpenFileDialog { Filter = "Images (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp" };
         if (dialog.ShowDialog() != true) return;
         try { ImagePath = RoomImageStorage.Import(dialog.FileName, "room-types"); }
-        catch (Exception ex) { StatusMessage = ex.Message; }
+        catch (Exception ex) { Notify(ex.Message, "error"); }
     }
 }

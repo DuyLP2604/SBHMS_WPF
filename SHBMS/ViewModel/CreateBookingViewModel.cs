@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using SHBMS.Model;
 using SHBMS.DTO.Booking;
 using SHBMS.Helper;
 using SHBMS.Service.Interface;
@@ -9,6 +11,7 @@ public class CreateBookingViewModel : DatabaseViewModel
     private readonly IBookingService _service;
     public bool CanCreate => Session.GetRole() == "Staff";
     public ObservableCollection<BookingCustomerDto> CustomerMatches { get; } = new();
+    public ObservableCollection<string> Nationalities { get; } = new();
     public ObservableCollection<AvailableRoomTypeDto> AvailableTypes { get; } = new();
     public ObservableCollection<BookingRoomLineDto> Cart { get; } = new();
     public DateTime Today => DateTime.Today;
@@ -29,7 +32,7 @@ public class CreateBookingViewModel : DatabaseViewModel
     private string _address = "";
     public string Address { get => _address; set => SetProperty(ref _address, value); }
     private string _nationalityName = "";
-    public string NationalityName { get => _nationalityName; set => SetProperty(ref _nationalityName, value); }
+    public string NationalityName { get => _nationalityName; set => SetProperty(ref _nationalityName, value ?? ""); }
     private string _quantityText = "";
     public string QuantityText { get => _quantityText; set => SetProperty(ref _quantityText, value); }
     private bool _isNewCustomer;
@@ -96,14 +99,20 @@ public class CreateBookingViewModel : DatabaseViewModel
         BackCommand = new RelayCommand(_ => BackRequested?.Invoke(), _ => !IsBusy);
         Cart.CollectionChanged += (_, _) => { OnPropertyChanged(nameof(TotalAmount)); OnPropertyChanged(nameof(TotalRooms)); CommandManager.InvalidateRequerySuggested(); };
     }
-    protected override Task LoadDataAsync()
+    protected override async Task LoadDataAsync()
     {
         if (!CanCreate)
         {
             CustomerMatches.Clear(); SelectedCustomer = null; InvalidateRooms();
             throw new UnauthorizedAccessException("Only Staff can create bookings.");
         }
-        return Task.CompletedTask;
+        using var db = new Prn212SbhmsContext();
+        var nations = await db.Nationalities.AsNoTracking().OrderBy(n => n.NationalityName)
+            .Select(n => n.NationalityName).ToListAsync();
+        string selected = NationalityName;
+        Nationalities.Clear(); Nationalities.Add("");
+        foreach (var nation in nations) Nationalities.Add(nation);
+        NationalityName = selected;
     }
     private async Task SearchCustomersAsync()
     {
@@ -111,8 +120,12 @@ public class CreateBookingViewModel : DatabaseViewModel
         IsNewCustomer = false; SelectedCustomer = null;
         CustomerMatches.Clear(); foreach (var c in matches) CustomerMatches.Add(c);
         if (matches.Count == 1) SelectedCustomer = matches[0];
-        StatusMessage = matches.Count == 0 ? "No matching customers. Choose New customer to enter their details."
-            : matches.Count > 1 ? "Multiple customers found. Select the correct row." : "Customer selected.";
+        if (matches.Count == 0)
+            Notify("No matching customers. Choose New customer to enter their details.", "warning");
+        else if (matches.Count > 1)
+            Notify("Multiple customers found. Select the correct row.", "info");
+        else
+            Notify("Customer selected.", "success");
     }
     private (DateOnly Arrival, DateOnly Departure) Dates()
     {
@@ -121,7 +134,7 @@ public class CreateBookingViewModel : DatabaseViewModel
     }
     private void InvalidateRooms()
     {
-        StatusMessage = ""; HasRoomSearch = false; SelectedAvailableType = null; SelectedCartItem = null;
+        HasRoomSearch = false; SelectedAvailableType = null; SelectedCartItem = null;
         AvailableTypes.Clear(); Cart.Clear(); CommandManager.InvalidateRequerySuggested();
     }
     private async Task SearchRoomsAsync()
@@ -131,21 +144,26 @@ public class CreateBookingViewModel : DatabaseViewModel
         var types = await _service.GetAvailableRoomTypesAsync(dates.Arrival, dates.Departure);
         foreach (var type in types) AvailableTypes.Add(type);
         HasRoomSearch = true;
-        StatusMessage = types.Any(t => t.AvailableRooms > 0) ? "Select a room type, enter quantity and add it to the booking." : "No rooms are available for these dates.";
+        if (types.Any(t => t.AvailableRooms > 0))
+            Notify("Select a room type, enter quantity and add it to the booking.", "info");
+        else
+            Notify("No rooms are available for these dates.", "warning");
     }
     private void AddRoom()
     {
         if (!CanCreate || !HasRoomSearch || SelectedAvailableType == null) return;
         if (!int.TryParse(QuantityText, out int quantity) || quantity <= 0)
-        { StatusMessage = "Quantity must be a positive integer."; return; }
+        {
+            Notify("Quantity must be a positive integer.", "warning"); return;
+        }
         var type = SelectedAvailableType;
         var existing = Cart.FirstOrDefault(r => r.RoomTypeId == type.RoomTypeId);
         long combined = (long)(existing?.Quantity ?? 0) + quantity;
-        if (combined > type.AvailableRooms) { StatusMessage = "The requested quantity exceeds available rooms."; return; }
+        if (combined > type.AvailableRooms) { Notify("The requested quantity exceeds available rooms.", "warning"); return; }
         if (existing != null) Cart.Remove(existing);
         Cart.Add(new BookingRoomLineDto { RoomTypeId = type.RoomTypeId, TypeName = type.Name,
             Quantity = (int)combined, UnitPrice = type.UnitPrice, NumberOfNights = NumberOfNights });
-        StatusMessage = "Room selection updated. To change a quantity, remove its row and add it again.";
+        Notify("Room selection updated. To change a quantity, remove its row and add it again.", "success");
     }
     private async Task ConfirmAsync()
     {
