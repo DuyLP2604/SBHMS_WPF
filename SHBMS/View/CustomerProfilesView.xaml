@@ -36,7 +36,7 @@
             <TextBlock Text="Customer profiles" FontSize="25" FontWeight="Bold" Foreground="#13233C" Margin="0,2,0,2" />
 
             <TextBlock Text="Manage customer information and guest records." FontSize="12" Foreground="#718096" />
-        <TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,6,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,6,0,0" />
         </StackPanel>
 
         <!-- CUSTOMER FORM -->
@@ -129,9 +129,14 @@
                         <TextBlock Text="NATIONALITY" Style="{StaticResource FieldLabel}" />
 
                         <ComboBox x:Name="NationalityBox"
-                                  ItemsSource="{Binding Nationalities}"
-                                  SelectedItem="{Binding TextBoxItem.NationalityName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  Height="38" IsEditable="False" />
+                              ItemsSource="{Binding Nationalities}"
+                              DisplayMemberPath="NationalityName"
+                              SelectedValuePath="NationalityId"
+                              SelectedValue="{Binding TextBoxItem.NationalityId,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                              Height="38"
+                              IsEditable="False" />
                     </StackPanel>
                 </Grid>
 
@@ -200,7 +205,9 @@
 
                         <DataGridTextColumn Header="ADDRESS" Binding="{Binding Address}" Width="230" MinWidth="230" />
 
-                        <DataGridTextColumn Header="NATIONALITY" Binding="{Binding NationalityName}" Width="130" MinWidth="130" />
+                        <DataGridTextColumn Header="NATIONALITY"
+                            Binding="{Binding NationalityName, Mode=OneWay}"
+                            Width="130" />
 
                     </DataGrid.Columns>
                 </DataGrid>

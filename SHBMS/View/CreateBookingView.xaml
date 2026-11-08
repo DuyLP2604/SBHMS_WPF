@@ -25,7 +25,6 @@
         <StackPanel Margin="0,0,0,12">
             <TextBlock Text="New booking" FontSize="25" FontWeight="Bold" Foreground="{StaticResource Navy}"/>
             <TextBlock Text="Choose the customer, dates and room types, then confirm the room charge." Foreground="{StaticResource Muted}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,5,0,0"/>
         </StackPanel>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
@@ -76,7 +75,7 @@
                                 <TextBlock Text="NATIONALITY" Style="{StaticResource FieldLabel}"/>
                                 <ComboBox ItemsSource="{Binding Nationalities}"
                                           SelectedItem="{Binding NationalityName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                          IsEnabled="{Binding IsNewCustomer}" IsEditable="False"/>
+                                          IsEnabled="{Binding IsNewCustomer}" IsEditable="False" Height="39"/>
                             </StackPanel>
                         </UniformGrid>
                     </StackPanel>

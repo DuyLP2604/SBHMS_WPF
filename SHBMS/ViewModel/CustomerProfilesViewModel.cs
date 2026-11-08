@@ -117,7 +117,6 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     private void PrepareNewForm()
     {
         SelectedItem = null;
-        _editingCustomerId = null;
         TextBoxItem = EmptyCustomer();
         StatusMessage = "";
         OnPropertyChanged(nameof(IsNew));

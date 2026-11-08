@@ -25,17 +25,14 @@ public partial class MainWindow : Window
             CustomerNavButton,
             () => new CustomerProfilesView());
 
-        // Temporary test: remove this line after confirming the toast appears.
-        Loaded += (_, _) =>
-            ToastService.Show("Toast is working.", "success");
     }
     // Navigation is view behavior. Each page owns its own data ViewModel.
     // Create pages on demand so opening the shell does not query every database table.
     private void Navigate(string key, string title, Button button, Func<UserControl> create)
     {
         if ((key == "Rooms" || key == "RoomTypes") && !_vm.CanViewRooms) return;
-        if (key == "Bookings" && !_vm.CanViewBookings) return;
-        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton,
+        if ((key == "Bookings" || key == "CheckIn" || key == "CheckOut") && !_vm.CanViewBookings) return;
+        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton,
             FeedbackNavButton, InvoiceNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
         button.Tag = "Selected";
         if (!_pages.TryGetValue(key, out var page)) { page = create(); _pages.Add(key, page); }
@@ -66,6 +63,10 @@ public partial class MainWindow : Window
         page.BookingCreated += id => ShowBookings(id);
         PageHost.Content = page; _vm.PageTitle = "New booking";
     }
+    private void CheckIn_Click(object sender, RoutedEventArgs e)
+        => Navigate("CheckIn", "Check-in", CheckInNavButton, () => new CheckInView());
+    private void CheckOut_Click(object sender, RoutedEventArgs e)
+        => Navigate("CheckOut", "Check-out", CheckOutNavButton, () => new CheckOutView());
     private void Stay_Click(object sender, RoutedEventArgs e) => Navigate("Stays", "Guest stays", StayNavButton, () => new GuestStayView());
     private void Room_Click(object sender, RoutedEventArgs e) => Navigate("Rooms", "Rooms", RoomNavButton, () => new RoomsView());
     private void ServiceRequest_Click(object sender, RoutedEventArgs e) => Navigate("Services", "Booking services", ServiceRequestNavButton, () => new ServiceRequestsView());
