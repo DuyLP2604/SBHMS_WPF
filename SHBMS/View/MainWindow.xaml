@@ -38,7 +38,8 @@
                         <Button x:Name="BookingNavButton" Content="Bookings" Style="{StaticResource NavButton}" Click="Bookings_Click" Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}"/>
                         <Button x:Name="StayNavButton" Content="Guest stays" Style="{StaticResource NavButton}" Click="Stay_Click"/>
                         <Button x:Name="RoomNavButton" Content="Rooms" Style="{StaticResource NavButton}" Click="Room_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}"/>
-                        <Button x:Name="ServiceRequestNavButton" Content="Booking services" Style="{StaticResource NavButton}" Click="ServiceRequest_Click"/>
+                        <Button x:Name="ServiceRequestNavButton" Content="Service Requests" Style="{StaticResource NavButton}" Click="ServiceRequest_Click" Visibility="{Binding IsStaff, Converter={StaticResource BoolToVisibility}}"/>
+                        <Button x:Name="ServiceAvailabilityNavButton" Content="Service Availability" Style="{StaticResource NavButton}" Click="ServiceAvailability_Click" Visibility="{Binding CanViewServiceAvailability, Converter={StaticResource BoolToVisibility}}"/>
                         <Button x:Name="FeedbackNavButton" Content="Guest feedback" Style="{StaticResource NavButton}" Click="Feedback_Click"/>
                         <Button x:Name="InvoiceNavButton" Content="Invoices" Style="{StaticResource NavButton}" Click="Invoice_Click"/>
                         <Button x:Name="RoomTypeNavButton" Content="Room types" Style="{StaticResource NavButton}" Click="RoomTypes_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}"/>

@@ -12,6 +12,12 @@ namespace SHBMS.Helper
         public static bool CanViewRooms => CurrentAccount?.Role is "Staff" or "Manager";
         public static bool CanViewBookings => CurrentAccount?.Role is "Staff" or "Manager";
 
+        public static bool IsStaff => CurrentAccount?.Role == "Staff";
+
+        public static bool CanManageServiceRequests
+            => CurrentAccount?.Role == "Staff";
+
+
         public static string? GetRole() => CurrentAccount?.Role;
 
         public static void SetAccount(AccountDto account) => CurrentAccount = account;

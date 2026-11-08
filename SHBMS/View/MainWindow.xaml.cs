@@ -18,11 +18,22 @@ public partial class MainWindow : Window
     {
         if ((key == "Rooms" || key == "RoomTypes") && !_vm.CanViewRooms) return;
         if (key == "Bookings" && !_vm.CanViewBookings) return;
-        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton,
+        foreach (var nav in new[] { CustomerNavButton, BookingNavButton, StayNavButton, RoomNavButton, ServiceRequestNavButton, ServiceAvailabilityNavButton,
             FeedbackNavButton, InvoiceNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
         button.Tag = "Selected";
         if (!_pages.TryGetValue(key, out var page)) { page = create(); _pages.Add(key, page); }
         PageHost.Content = page; _vm.PageTitle = title;
+
+        if (key == "ServiceRequests" &&
+            !Session.CanManageServiceRequests)
+
+            if (key == "ServiceAvailability" &&
+                !_vm.CanViewServiceAvailability) return;
+
+        {
+            return;
+        }
+
     }
     private void Customer_Click(object sender, RoutedEventArgs e) => Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
     private void Feedback_Click(object sender, RoutedEventArgs e) => Navigate("Feedback", "Guest feedback", FeedbackNavButton, () => new GuestFeedbackView());
@@ -51,7 +62,24 @@ public partial class MainWindow : Window
     }
     private void Stay_Click(object sender, RoutedEventArgs e) => Navigate("Stays", "Guest stays", StayNavButton, () => new GuestStayView());
     private void Room_Click(object sender, RoutedEventArgs e) => Navigate("Rooms", "Rooms", RoomNavButton, () => new RoomsView());
-    private void ServiceRequest_Click(object sender, RoutedEventArgs e) => Navigate("Services", "Booking services", ServiceRequestNavButton, () => new ServiceRequestsView());
+
+
+    private void ServiceRequest_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_vm.IsStaff) return;
+
+        Navigate("ServiceRequests", "Service Requests",
+            ServiceRequestNavButton, () => new ServiceRequestsView());
+    }
+
+    private void ServiceAvailability_Click( object sender, RoutedEventArgs e)
+    {
+        if (!_vm.CanViewServiceAvailability) return;
+
+        Navigate("ServiceAvailability", "Service Availability", ServiceAvailabilityNavButton, () => new ServiceAvailabilityView());
+    }
+
+
     private void RoomTypes_Click(object sender, RoutedEventArgs e)
         => Navigate("RoomTypes", "Room types", RoomTypeNavButton, () => new RoomTypesView());
     private void Staff_Click(object sender, RoutedEventArgs e)
