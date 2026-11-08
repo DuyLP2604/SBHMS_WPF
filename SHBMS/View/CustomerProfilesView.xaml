@@ -185,9 +185,10 @@
                         <TextBlock Text="NATIONALITY"
                                    Style="{StaticResource FieldLabel}" />
 
-                        <TextBox x:Name="NationalityBox" Text="{Binding NationalityName, UpdateSourceTrigger=PropertyChanged}"
-                                 Height="38"
-                                 MaxLength="50" />
+                        <ComboBox x:Name="NationalityBox"
+                                  ItemsSource="{Binding Nationalities}"
+                                  SelectedItem="{Binding NationalityName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Height="38" IsEditable="False" />
                     </StackPanel>
                 </Grid>
 
