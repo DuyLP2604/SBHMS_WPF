@@ -8,6 +8,7 @@ namespace SHBMS.ViewModel;
 
 public class RevenueManagementViewModel : BaseViewModel
 {
+    // Tab visibility states and switching command
     private bool _isRevenueVisible = true;
     public bool IsRevenueVisible
     {
@@ -24,6 +25,7 @@ public class RevenueManagementViewModel : BaseViewModel
 
     public ICommand SwitchTabCommand { get; }
 
+    // Revenue report collections, filter parameters, and commands
     public ObservableCollection<RevenueReportDto> RevenueList { get; set; } = new ObservableCollection<RevenueReportDto>();
     public List<string> ReportTypes { get; set; } = new List<string> { "Daily", "Monthly" };
 
@@ -57,6 +59,7 @@ public class RevenueManagementViewModel : BaseViewModel
     public ICommand ViewReportCommand { get; }
     public ICommand ResetReportCommand { get; }
 
+    // Promotion voucher list, form input fields, and action commands
     public ObservableCollection<PromotionDto> PromotionList { get; set; } = new ObservableCollection<PromotionDto>();
 
     private PromotionDto? _selectedPromotion;
@@ -116,6 +119,7 @@ public class RevenueManagementViewModel : BaseViewModel
     public ICommand DeletePromoCommand { get; }
     public ICommand ClearPromoCommand { get; }
 
+    // Room category selection, pricing inputs, and surcharge configuration
     public ObservableCollection<RoomType> RoomTypeList { get; set; } = new ObservableCollection<RoomType>();
 
     private RoomType? _selectedRoomType;
@@ -148,6 +152,7 @@ public class RevenueManagementViewModel : BaseViewModel
     public ICommand SavePricingRuleCommand { get; }
     public ICommand UpdateRoomPriceCommand { get; }
 
+    // Initialize relay commands and load initial operational data
     public RevenueManagementViewModel()
     {
         SwitchTabCommand = new RelayCommand(param => SwitchTab(param?.ToString()));
@@ -170,6 +175,7 @@ public class RevenueManagementViewModel : BaseViewModel
         LoadData();
     }
 
+    // Seed initial demo promotion vouchers
     private void InitSamplePromotions()
     {
         PromotionDto p1 = new PromotionDto
@@ -196,14 +202,17 @@ public class RevenueManagementViewModel : BaseViewModel
         PromotionList.Add(p2);
     }
 
+    // Coordinate data loading for room types and revenue records
     public void LoadData()
     {
         LoadRoomTypesFromDb();
         LoadRevenueFromDb();
     }
 
+    // Load room categories from the database into the pricing table
     public void LoadRoomTypesFromDb()
     {
+        // Create a new instance of the database context to interact with the database
         using (Prn212SbhmsContext context = new Prn212SbhmsContext())
         {
             List<RoomType> roomList = context.RoomTypes.ToList();
@@ -221,6 +230,7 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
+    // Update the base price of the selected room type directly in SQL Server
     public void UpdateRoomPrice()
     {
         if (SelectedRoomType == null)
@@ -235,6 +245,7 @@ public class RevenueManagementViewModel : BaseViewModel
             return;
         }
 
+        // Create a new instance of the database context to interact with the database
         using (Prn212SbhmsContext context = new Prn212SbhmsContext())
         {
             RoomType? roomInDb = context.RoomTypes.FirstOrDefault(r => r.RoomTypeId == SelectedRoomType.RoomTypeId);
@@ -250,6 +261,7 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
+    // Validate and save the weekend pricing surcharge multiplier
     public void SaveWeekendSurcharge()
     {
         decimal rate;
@@ -265,14 +277,17 @@ public class RevenueManagementViewModel : BaseViewModel
         System.Windows.MessageBox.Show($"Saved weekend surcharge multiplier: x{rate}\n\nExample preview:\nBase price: {sampleBase:N0} VND\nWeekend price: {sampleWeekend:N0} VND", "Surcharge Saved", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
     }
 
+    // Retrieve finalized invoices from the database and aggregate by period
     public void LoadRevenueFromDb()
     {
+        // Create a new instance of the database context to interact with the database
         using (Prn212SbhmsContext context = new Prn212SbhmsContext())
         {
             List<Invoice> invoiceList = context.Invoices.ToList();
 
             RevenueList.Clear();
 
+            // Group invoices by calendar month (MM/yyyy)
             if (SelectedReportType == "Monthly")
             {
                 IEnumerable<IGrouping<string, Invoice>> monthlyGroups = invoiceList
@@ -295,6 +310,7 @@ public class RevenueManagementViewModel : BaseViewModel
                     RevenueList.Add(report);
                 }
             }
+            // Group invoices by calendar day (dd/MM/yyyy)
             else
             {
                 IEnumerable<IGrouping<DateTime, Invoice>> dailyGroups = invoiceList
@@ -319,6 +335,7 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
+    // Filter revenue records for a specific date or month
     public void FilterRevenueFromDb()
     {
         if (ReportDate == null)
@@ -329,6 +346,7 @@ public class RevenueManagementViewModel : BaseViewModel
 
         DateTime targetDate = ReportDate.Value.Date;
 
+        // Create a new instance of the database context to interact with the database
         using (Prn212SbhmsContext context = new Prn212SbhmsContext())
         {
             List<Invoice> filteredInvoices;
@@ -373,6 +391,7 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
+    // Validate and register a new promotional discount voucher
     public void AddPromotion()
     {
         if (string.IsNullOrWhiteSpace(PromoCode))
@@ -402,6 +421,7 @@ public class RevenueManagementViewModel : BaseViewModel
         ClearPromoForm();
     }
 
+    // Update details of the selected promotional campaign
     public void UpdatePromotion()
     {
         if (SelectedPromotion == null)
@@ -434,6 +454,7 @@ public class RevenueManagementViewModel : BaseViewModel
         System.Windows.MessageBox.Show($"Promotion '{SelectedPromotion.Code}' updated successfully!", "Updated", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
     }
 
+    // Delete the selected promotional campaign after user confirmation
     public void DeletePromotion()
     {
         if (SelectedPromotion == null)
@@ -450,6 +471,7 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
+    // Reset all promotion form fields back to their default values
     public void ClearPromoForm()
     {
         SelectedPromotion = null;
@@ -460,6 +482,7 @@ public class RevenueManagementViewModel : BaseViewModel
         PromoDesc = "";
     }
 
+    // Switch between section visibility tabs
     public void SwitchTab(string? tab)
     {
         if (tab == "1")
