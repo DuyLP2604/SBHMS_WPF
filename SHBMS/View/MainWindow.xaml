@@ -69,7 +69,7 @@
                         </Button>
                         <Button x:Name="BookingNavButton" Style="{StaticResource NavButton}" Click="Bookings_Click" Visibility="{Binding CanViewBookings, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="📅" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Bookings" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -89,7 +89,7 @@
                         </Button>
                         <Button x:Name="StayNavButton" Style="{StaticResource NavButton}" Click="Stay_Click">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="🛎️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Guest stays" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -101,13 +101,13 @@
                         </Button>
                         <Button x:Name="RoomNavButton" Style="{StaticResource NavButton}" Click="Room_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="🛏️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Rooms" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="ServiceRequestNavButton" Style="{StaticResource NavButton}" Click="ServiceRequest_Click">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="☕" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Booking services" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -119,19 +119,25 @@
                         </Button>
                         <Button x:Name="InvoiceNavButton" Style="{StaticResource NavButton}" Click="Invoice_Click">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="🧾" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Invoices" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="RevenueNavButton" Style="{StaticResource NavButton}" Click="Revenue_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Revenue &amp; pricing" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="RoomTypeNavButton" Style="{StaticResource NavButton}" Click="RoomTypes_Click" Visibility="{Binding CanViewRooms, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="🏷️" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Room types" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="StaffNavButton" Style="{StaticResource NavButton}" Click="Staff_Click" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="👥" FontFamily="Segoe UI" FontSize="15" Width="18" Margin="0,0,10,0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <TextBlock Text="Staff accounts" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
