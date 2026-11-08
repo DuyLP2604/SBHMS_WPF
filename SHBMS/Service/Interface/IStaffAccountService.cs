@@ -9,5 +9,6 @@ namespace SHBMS.Service.Interface
         Task<bool> CreateStaffAccountAsync(AccountCreateDto dto);
         Task<bool> UpdateStaffAccountAsync(AccountUpdateDto dto);
         Task<bool> ToggleAccountStatusAsync(int accountId, bool isActive);
+        Task<bool> DeleteStaffAccountAsync(int accountId);
     }
 }

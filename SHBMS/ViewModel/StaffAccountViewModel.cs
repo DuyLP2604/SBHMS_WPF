@@ -6,6 +6,7 @@ using SHBMS.Service.Interface;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Mail;
+using System.Windows;
 using System.Windows.Data;
 
 namespace SHBMS.ViewModel;
@@ -62,6 +63,7 @@ public class StaffAccountViewModel : DatabaseViewModel
     public RelayCommand SaveCommand { get; }
     public RelayCommand SearchCommand { get; }
     public RelayCommand ShowAllCommand { get; }
+    public RelayCommand DeleteCommand { get; }
 
     public StaffAccountViewModel() : this(new StaffAccountService(new Prn212SbhmsContext())) { }
 
@@ -80,7 +82,7 @@ public class StaffAccountViewModel : DatabaseViewModel
 
         // Chặn quyền Save (Chỉ Admin mới thao tác được)
         SaveCommand = DatabaseCommand(SaveAsync, () => Session.IsAdmin);
-
+        DeleteCommand = DatabaseCommand(DeleteAccountAsync, () => Session.IsAdmin && SelectedAccount != null);
         SearchCommand = new RelayCommand(_ => AccountsView.Refresh(), _ => !IsBusy);
         ShowAllCommand = new RelayCommand(_ => { SearchText = ""; AccountsView.Refresh(); }, _ => !IsBusy);
         SelectedAccount = null;
@@ -178,6 +180,39 @@ public class StaffAccountViewModel : DatabaseViewModel
         {
             await LoadDataAsync();
             StatusMessage = "Account saved successfully.";
+        }
+    }
+    private async Task DeleteAccountAsync()
+    {
+        if (!Session.IsAdmin || SelectedAccount == null) return;
+
+        // Không cho phép Admin tự xóa chính mình
+        if (SelectedAccount.UserId == Session.CurrentAccount?.UserId)
+        {
+            StatusMessage = "You cannot delete your own account.";
+            return;
+        }
+
+        // Hiển thị hộp thoại xác nhận
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete the account '{SelectedAccount.Username}' and all related employee data?",
+            "Confirm Delete",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes) return;
+
+        // Chỉ thực thi logic xóa, không cần IsBusy = true hay try/catch nữa
+        bool success = await _service.DeleteStaffAccountAsync(SelectedAccount.UserId);
+
+        if (success)
+        {
+            StatusMessage = $"Account '{SelectedAccount.Username}' deleted successfully.";
+            await LoadDataAsync(); // Refresh lại DataGrid
+        }
+        else
+        {
+            StatusMessage = "Failed to delete account. It may have already been removed.";
         }
     }
 }
