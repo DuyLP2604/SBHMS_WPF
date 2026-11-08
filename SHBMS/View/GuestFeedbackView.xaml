@@ -45,12 +45,7 @@
         <!-- PAGE HEADER -->
         <StackPanel Grid.Row="0"
                     Margin="0,0,0,10">
-
-            <TextBlock Text="GUEST EXPERIENCE"
-                       Foreground="#4169E1"
-                       FontWeight="Bold"
-                       FontSize="10" />
-
+            
             <TextBlock Text="Guest feedback"
                        FontSize="24"
                        FontWeight="Bold"
@@ -183,7 +178,7 @@
                         <DataGridTextColumn Header="STATUS"
                                             Binding="{Binding Status}"
                                             Width="120"
-                                            MinWidth="120" />
+                                            MinWidth="120"/>
 
                         <DataGridTextColumn Header="REPLY"
                                             Binding="{Binding ReplyMessage}"
@@ -306,6 +301,7 @@
                              Margin="0,0,0,10"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
+
                              VerticalContentAlignment="Top"
                              VerticalScrollBarVisibility="Auto" />
 
