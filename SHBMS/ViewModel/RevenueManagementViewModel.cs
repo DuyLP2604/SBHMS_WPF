@@ -8,9 +8,6 @@ namespace SHBMS.ViewModel;
 
 public class RevenueManagementViewModel : BaseViewModel
 {
-    // ==========================================
-    // 1. TAB SWITCHING (DUAL FUNCTION NAVIGATION)
-    // ==========================================
     private bool _isRevenueVisible = true;
     public bool IsRevenueVisible
     {
@@ -27,9 +24,6 @@ public class RevenueManagementViewModel : BaseViewModel
 
     public ICommand SwitchTabCommand { get; }
 
-    // ==========================================
-    // 2. REVENUE REPORTS (LOADED FROM DB INVOICE)
-    // ==========================================
     public ObservableCollection<RevenueReportDto> RevenueList { get; set; } = new ObservableCollection<RevenueReportDto>();
     public List<string> ReportTypes { get; set; } = new List<string> { "Daily", "Monthly" };
 
@@ -63,9 +57,6 @@ public class RevenueManagementViewModel : BaseViewModel
     public ICommand ViewReportCommand { get; }
     public ICommand ResetReportCommand { get; }
 
-    // ==========================================
-    // 3. PROMOTIONS MANAGEMENT
-    // ==========================================
     public ObservableCollection<PromotionDto> PromotionList { get; set; } = new ObservableCollection<PromotionDto>();
 
     private PromotionDto? _selectedPromotion;
@@ -121,11 +112,31 @@ public class RevenueManagementViewModel : BaseViewModel
     }
 
     public ICommand AddPromoCommand { get; }
+    public ICommand UpdatePromoCommand { get; }
+    public ICommand DeletePromoCommand { get; }
+    public ICommand ClearPromoCommand { get; }
 
-    // ==========================================
-    // 4. ROOM PRICING (LOADED FROM DB ROOM_TYPE)
-    // ==========================================
     public ObservableCollection<RoomType> RoomTypeList { get; set; } = new ObservableCollection<RoomType>();
+
+    private RoomType? _selectedRoomType;
+    public RoomType? SelectedRoomType
+    {
+        get { return _selectedRoomType; }
+        set
+        {
+            if (SetProperty(ref _selectedRoomType, value) && value != null)
+            {
+                EditRoomPrice = value.Price;
+            }
+        }
+    }
+
+    private decimal _editRoomPrice = 0;
+    public decimal EditRoomPrice
+    {
+        get { return _editRoomPrice; }
+        set { SetProperty(ref _editRoomPrice, value); }
+    }
 
     private string _weekendRate = "1.2";
     public string WeekendRate
@@ -135,10 +146,8 @@ public class RevenueManagementViewModel : BaseViewModel
     }
 
     public ICommand SavePricingRuleCommand { get; }
+    public ICommand UpdateRoomPriceCommand { get; }
 
-    // ==========================================
-    // CONSTRUCTOR
-    // ==========================================
     public RevenueManagementViewModel()
     {
         SwitchTabCommand = new RelayCommand(param => SwitchTab(param?.ToString()));
@@ -148,26 +157,51 @@ public class RevenueManagementViewModel : BaseViewModel
             ReportDate = null;
             LoadRevenueFromDb();
         });
-        AddPromoCommand = new RelayCommand(_ => AddPromotion());
-        SavePricingRuleCommand = new RelayCommand(_ =>
-        {
-            System.Windows.MessageBox.Show("Saved weekend surcharge multiplier: x" + WeekendRate, "Configuration Saved", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-        });
 
-        // Load data synchronously
+        AddPromoCommand = new RelayCommand(_ => AddPromotion());
+        UpdatePromoCommand = new RelayCommand(_ => UpdatePromotion());
+        DeletePromoCommand = new RelayCommand(_ => DeletePromotion());
+        ClearPromoCommand = new RelayCommand(_ => ClearPromoForm());
+
+        SavePricingRuleCommand = new RelayCommand(_ => SaveWeekendSurcharge());
+        UpdateRoomPriceCommand = new RelayCommand(_ => UpdateRoomPrice());
+
+        InitSamplePromotions();
         LoadData();
     }
 
-    // ==========================================
-    // DATA LOADING (SYNCHRONOUS, NO ASYNC, NO VAR)
-    // ==========================================
+    private void InitSamplePromotions()
+    {
+        PromotionDto p1 = new PromotionDto
+        {
+            PromotionId = 1,
+            Code = "WELCOME10",
+            DiscountPercentage = 10,
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddMonths(1),
+            Description = "10% off for first-time guests",
+            IsActive = true
+        };
+        PromotionDto p2 = new PromotionDto
+        {
+            PromotionId = 2,
+            Code = "HOLIDAY20",
+            DiscountPercentage = 20,
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddMonths(2),
+            Description = "20% off for holiday season bookings",
+            IsActive = true
+        };
+        PromotionList.Add(p1);
+        PromotionList.Add(p2);
+    }
+
     public void LoadData()
     {
         LoadRoomTypesFromDb();
         LoadRevenueFromDb();
     }
 
-    // 1. Load room types from database
     public void LoadRoomTypesFromDb()
     {
         using (Prn212SbhmsContext context = new Prn212SbhmsContext())
@@ -179,10 +213,58 @@ public class RevenueManagementViewModel : BaseViewModel
             {
                 RoomTypeList.Add(item);
             }
+
+            if (RoomTypeList.Count > 0 && SelectedRoomType == null)
+            {
+                SelectedRoomType = RoomTypeList[0];
+            }
         }
     }
 
-    // 2. Load revenue from database grouped by Daily or Monthly
+    public void UpdateRoomPrice()
+    {
+        if (SelectedRoomType == null)
+        {
+            System.Windows.MessageBox.Show("Please select a room type from the table to update its price!", "No Selection", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        if (EditRoomPrice <= 0)
+        {
+            System.Windows.MessageBox.Show("Price must be greater than 0 VND!", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        using (Prn212SbhmsContext context = new Prn212SbhmsContext())
+        {
+            RoomType? roomInDb = context.RoomTypes.FirstOrDefault(r => r.RoomTypeId == SelectedRoomType.RoomTypeId);
+            if (roomInDb != null)
+            {
+                roomInDb.Price = EditRoomPrice;
+                context.SaveChanges();
+
+                System.Windows.MessageBox.Show($"Price for {roomInDb.TypeName} ({roomInDb.RoomTypeId}) has been successfully updated to {EditRoomPrice:N0} VND in the database!", "Price Saved", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+                LoadRoomTypesFromDb();
+            }
+        }
+    }
+
+    public void SaveWeekendSurcharge()
+    {
+        decimal rate;
+        if (!decimal.TryParse(WeekendRate, out rate) || rate < 1.0m)
+        {
+            System.Windows.MessageBox.Show("Weekend surcharge multiplier must be a valid number >= 1.0 (e.g. 1.2)", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        decimal sampleBase = SelectedRoomType != null ? SelectedRoomType.Price : 500000;
+        decimal sampleWeekend = sampleBase * rate;
+
+        System.Windows.MessageBox.Show($"Saved weekend surcharge multiplier: x{rate}\n\nExample preview:\nBase price: {sampleBase:N0} VND\nWeekend price: {sampleWeekend:N0} VND", "Surcharge Saved", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+    }
+
     public void LoadRevenueFromDb()
     {
         using (Prn212SbhmsContext context = new Prn212SbhmsContext())
@@ -193,7 +275,6 @@ public class RevenueManagementViewModel : BaseViewModel
 
             if (SelectedReportType == "Monthly")
             {
-                // Group invoices by Year and Month
                 IEnumerable<IGrouping<string, Invoice>> monthlyGroups = invoiceList
                     .GroupBy(inv => inv.InvoiceDate.ToString("MM/yyyy"));
 
@@ -216,7 +297,6 @@ public class RevenueManagementViewModel : BaseViewModel
             }
             else
             {
-                // Group invoices by Date (Daily)
                 IEnumerable<IGrouping<DateTime, Invoice>> dailyGroups = invoiceList
                     .GroupBy(inv => inv.InvoiceDate.Date);
 
@@ -239,7 +319,6 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
-    // 3. Filter revenue by selected date / month
     public void FilterRevenueFromDb()
     {
         if (ReportDate == null)
@@ -294,12 +373,17 @@ public class RevenueManagementViewModel : BaseViewModel
         }
     }
 
-    // 4. Add promotion to list
     public void AddPromotion()
     {
         if (string.IsNullOrWhiteSpace(PromoCode))
         {
             System.Windows.MessageBox.Show("Please enter a promotion code!", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        if (PromoDiscount <= 0 || PromoDiscount > 100)
+        {
+            System.Windows.MessageBox.Show("Discount percentage must be between 1% and 100%!", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return;
         }
 
@@ -313,26 +397,82 @@ public class RevenueManagementViewModel : BaseViewModel
         promo.IsActive = true;
 
         PromotionList.Add(promo);
+        System.Windows.MessageBox.Show($"Promotion code '{promo.Code}' with {promo.DiscountPercentage}% discount added successfully!", "Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
 
-        // Reset form inputs
+        ClearPromoForm();
+    }
+
+    public void UpdatePromotion()
+    {
+        if (SelectedPromotion == null)
+        {
+            System.Windows.MessageBox.Show("Please select a promotion from the table to update!", "No Selection", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(PromoCode))
+        {
+            System.Windows.MessageBox.Show("Please enter a promotion code!", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        SelectedPromotion.Code = PromoCode.Trim().ToUpper();
+        SelectedPromotion.DiscountPercentage = PromoDiscount;
+        SelectedPromotion.StartDate = PromoStartDate ?? DateTime.Today;
+        SelectedPromotion.EndDate = PromoEndDate ?? DateTime.Today.AddMonths(1);
+        SelectedPromotion.Description = PromoDesc;
+
+        int index = PromotionList.IndexOf(SelectedPromotion);
+        if (index >= 0)
+        {
+            PromotionDto current = SelectedPromotion;
+            PromotionList.RemoveAt(index);
+            PromotionList.Insert(index, current);
+            SelectedPromotion = current;
+        }
+
+        System.Windows.MessageBox.Show($"Promotion '{SelectedPromotion.Code}' updated successfully!", "Updated", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+    }
+
+    public void DeletePromotion()
+    {
+        if (SelectedPromotion == null)
+        {
+            System.Windows.MessageBox.Show("Please select a promotion to delete!", "No Selection", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        System.Windows.MessageBoxResult result = System.Windows.MessageBox.Show($"Are you sure you want to delete promotion code '{SelectedPromotion.Code}'?", "Confirm Delete", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question);
+        if (result == System.Windows.MessageBoxResult.Yes)
+        {
+            PromotionList.Remove(SelectedPromotion);
+            ClearPromoForm();
+        }
+    }
+
+    public void ClearPromoForm()
+    {
+        SelectedPromotion = null;
         PromoCode = "";
+        PromoDiscount = 10;
+        PromoStartDate = DateTime.Today;
+        PromoEndDate = DateTime.Today.AddMonths(1);
         PromoDesc = "";
     }
 
-    // 5. Tab switcher between the 2 functions
     public void SwitchTab(string? tab)
     {
-        if (tab == "1") // 1. Revenue reports
+        if (tab == "1")
         {
             IsRevenueVisible = true;
             IsPricingVisible = false;
         }
-        else if (tab == "2") // 2. Promotions & pricing
+        else if (tab == "2")
         {
             IsRevenueVisible = false;
             IsPricingVisible = true;
         }
-        else // View all
+        else
         {
             IsRevenueVisible = true;
             IsPricingVisible = true;
