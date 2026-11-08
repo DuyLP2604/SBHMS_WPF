@@ -109,7 +109,7 @@ namespace SHBMS.Service.Implementation
             return true;
         }
 
-        // Dành riêng cho Update Mật khẩu (nếu cần tách biệt)
+        // Dành riêng cho Update Mật khẩu 
         public async Task<bool> UpdatePasswordAsync(int accountId, string newPassword)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == accountId);
@@ -124,6 +124,21 @@ namespace SHBMS.Service.Implementation
         {
             // Theo như file UI của bạn ghi: "Account locking is not available in the current schema"
             throw new NotSupportedException("Database schema current does not support locking accounts.");
+        }
+        public async Task<bool> DeleteStaffAccountAsync(int accountId)
+        {
+            var user = await _context.Users
+                .Include(u => u.Employee)
+                .FirstOrDefaultAsync(u => u.UserId == accountId);
+            if (user == null) return false;
+            // Xóa Employee trước, sau đó xóa User
+            if (user.Employee != null)
+            {
+                _context.Employees.Remove(user.Employee);
+            }
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
