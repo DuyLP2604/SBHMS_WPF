@@ -8,11 +8,15 @@ public class MainWindowViewModel : BaseViewModel
     public bool CanViewRooms => Session.CanViewRooms;
     public bool CanViewBookings => Session.CanViewBookings;
     public bool CanViewInvoices => Session.CanViewInvoices;
-    public bool CanManagePricing => Session.IsManager;
-    public bool CanViewServiceAvailability => Session.GetRole() is "Staff" or "Manager";
+    public bool CanManagePricing => Session.CanManagePricing;
+    public bool CanViewServiceAvailability => Session.CanViewServiceAvailability;
+    public bool CanManageCustomerProfiles => Session.CanManageCustomerProfiles;
+    public bool CanManageGuestStays => Session.CanManageGuestStays;
+    public bool CanManageBookingServices => Session.CanManageBookingServices;
+    public bool CanViewGuestFeedback => Session.CanViewGuestFeedback;
     public bool IsStaff => Session.IsStaff;
     public bool CanManageServiceRequests => Session.CanManageServiceRequests;
 
-    private string _pageTitle = "Customer profiles";
+    private string _pageTitle = "Workspace";
     public string PageTitle { get => _pageTitle; set => SetProperty(ref _pageTitle, value); }
 }

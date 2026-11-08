@@ -9,6 +9,9 @@ namespace SHBMS.ViewModel;
 
 public class GuestFeedbackViewModel : DatabaseViewModel
 {
+    public bool CanResolve => Session.CanResolveGuestFeedback;
+    public bool IsReplyReadOnly => !CanResolve;
+
     public ObservableCollection<Complaint> Feedback { get; } = new();
     public ICollectionView FeedbackView { get; }
     public string Summary => $"Total: {Feedback.Count} | Resolved: {Feedback.Count(f => f.Status == "Đã xử lý")}";
@@ -59,12 +62,15 @@ public class GuestFeedbackViewModel : DatabaseViewModel
             SearchText = "";
             FeedbackView.Refresh();
         }, _ => !IsBusy);
-        PendingCommand = DatabaseCommand(() => SaveStatusAsync(false));
-        ResolveCommand = DatabaseCommand(() => SaveStatusAsync(true));
+        PendingCommand = DatabaseCommand(() => SaveStatusAsync(false), () => CanResolve);
+        ResolveCommand = DatabaseCommand(() => SaveStatusAsync(true), () => CanResolve);
     }
 
     protected override async Task LoadDataAsync()
     {
+        if (!Session.CanViewGuestFeedback)
+            throw new UnauthorizedAccessException("Only Staff and Manager can view guest feedback.");
+
         using var db = new Prn212SbhmsContext();
         var data = await db.Complaints.AsNoTracking().Include(f => f.Customer)
             .OrderByDescending(f => f.CreatedAt).ToListAsync();
@@ -77,6 +83,10 @@ public class GuestFeedbackViewModel : DatabaseViewModel
 
     private async Task SaveStatusAsync(bool resolve)
     {
+        // Managers can review feedback; only Staff can change the reply or status.
+        if (!CanResolve)
+            throw new UnauthorizedAccessException("Only Staff can resolve guest feedback.");
+
         if (SelectedFeedback == null)
         {
             Notify("Please select a feedback first.", "warning");

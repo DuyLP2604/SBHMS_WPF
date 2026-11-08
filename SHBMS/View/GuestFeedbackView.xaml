@@ -19,6 +19,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ModernStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid Margin="16,12,16,12">
@@ -247,6 +248,7 @@
                     <TextBlock Text="REPLY / RESOLUTION NOTE"
                                Style="{StaticResource FieldLabel}" />
                     <TextBox x:Name="ReplyBox"
+                             IsReadOnly="{Binding IsReplyReadOnly}"
                              Height="75"
                              Padding="10"
                              Margin="0,0,0,10"
@@ -257,6 +259,7 @@
                              Text="{Binding ReplyText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <!-- Action Buttons -->
                     <WrapPanel HorizontalAlignment="Right"
+                               Visibility="{Binding CanResolve, Converter={StaticResource BoolToVisibility}}"
                                Orientation="Horizontal">
                         <Button Content="Mark as pending"
                                 Style="{StaticResource SecondaryButton}"

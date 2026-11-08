@@ -19,23 +19,20 @@ public partial class MainWindow : Window
 
         DataContext = _vm;
 
-        Navigate(
-            "Customers",
-            "Customer profiles",
-            CustomerNavButton,
-            () => new CustomerProfilesView());
-
+        // Open a page that the signed-in role can use.
+        if (Session.IsAdmin)
+            Navigate("Staff", "Staff accounts", StaffNavButton, () => new StaffAccountView());
+        else if (Session.IsStaff)
+            Navigate("Customers", "Customer profiles", CustomerNavButton, () => new CustomerProfilesView());
+        else if (Session.IsManager)
+            ShowBookings();
     }
     // Navigation is view behavior. Each page owns its own data ViewModel.
     // Create pages on demand so opening the shell does not query every database table.
     private void Navigate(string key, string title, Button button, Func<UserControl> create)
     {
-        if ((key == "Rooms" || key == "RoomTypes" || key == "RoomStatus") && !_vm.CanViewRooms) return;
-        if ((key == "Bookings" || key == "CheckIn" || key == "CheckOut" || key == "BookingServices") && !_vm.CanViewBookings) return;
-        if (key == "Invoices" && !_vm.CanViewInvoices) return;
-        if (key == "Revenue" && !_vm.CanManagePricing) return;
-        if (key == "ServiceRequests" && !_vm.CanManageServiceRequests) return;
-        if (key == "ServiceAvailability" && !_vm.CanViewServiceAvailability) return;
+        // Check before creating the page or loading its data.
+        if (!Session.CanAccessPage(key)) return;
         foreach (var nav in new[] { CustomerNavButton, BookingNavButton, CheckInNavButton, CheckOutNavButton,
             StayNavButton, RoomStatusNavButton, RoomNavButton, ServiceRequestNavButton, ServiceAvailabilityNavButton,
             BookingServicesNavButton, FeedbackNavButton, InvoiceNavButton, RevenueNavButton, RoomTypeNavButton, StaffNavButton }) nav.Tag = null;
