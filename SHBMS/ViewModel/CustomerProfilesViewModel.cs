@@ -10,6 +10,7 @@ namespace SHBMS.ViewModel;
 public class CustomerProfilesViewModel : DatabaseViewModel
 {
     public ObservableCollection<Customer> Customers { get; } = new();
+    public ObservableCollection<string> Nationalities { get; } = new();
     public ICollectionView CustomersView { get; }
     private string _customerId = "";
     public string CustomerId { get => _customerId; set => SetProperty(ref _customerId, value); }
@@ -24,7 +25,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     private string _address = "";
     public string Address { get => _address; set => SetProperty(ref _address, value); }
     private string _nationalityName = "";
-    public string NationalityName { get => _nationalityName; set => SetProperty(ref _nationalityName, value); }
+    public string NationalityName { get => _nationalityName; set => SetProperty(ref _nationalityName, value ?? ""); }
     private string _searchText = "";
     public string SearchText { get => _searchText; set => SetProperty(ref _searchText, value); }
     private Customer? _selectedCustomer;
@@ -69,7 +70,13 @@ public class CustomerProfilesViewModel : DatabaseViewModel
     protected override async Task LoadDataAsync()
     {
         using var db = new Prn212SbhmsContext();
-        var data = await db.Customers.AsNoTracking().OrderBy(c => c.CustomerId).ToListAsync();
+        var nations = await db.Nationalities.AsNoTracking().OrderBy(n => n.NationalityName)
+            .Select(n => n.NationalityName).ToListAsync();
+        Nationalities.Clear();
+        Nationalities.Add(""); // Nationality is optional on a customer profile.
+        foreach (var nation in nations) Nationalities.Add(nation);
+        var data = await db.Customers.AsNoTracking().Include(c => c.Nationality)
+            .OrderBy(c => c.CustomerId).ToListAsync();
         Customers.Clear(); foreach (var c in data) Customers.Add(c);
         SelectedCustomer = null;
     }
@@ -94,7 +101,12 @@ public class CustomerProfilesViewModel : DatabaseViewModel
         if (entity == null) { StatusMessage = "Customer no longer exists. Refresh the list."; return; }
         entity.FullName = FullName.Trim(); entity.Phone = Phone.Trim(); entity.IdentityNumber = identity;
         entity.Email = EntityIds.Optional(Email); entity.Address = EntityIds.Optional(Address);
-        entity.NationalityName = EntityIds.Optional(NationalityName);
+        string? nationName = EntityIds.Optional(NationalityName);
+        var nationality = nationName == null ? null : await db.Nationalities
+            .SingleOrDefaultAsync(n => n.NationalityName == nationName);
+        if (nationName != null && nationality == null)
+        { StatusMessage = "Select a nationality from the list."; return; }
+        entity.NationalityId = nationality?.NationalityId;
         if (id == null) db.Customers.Add(entity);
         await db.SaveChangesAsync();
         await LoadDataAsync();
