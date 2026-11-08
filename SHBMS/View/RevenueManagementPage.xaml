@@ -15,15 +15,11 @@
 
     <Grid Margin="16,10">
         <Grid.RowDefinitions>
-            <!-- Header & Switcher tabs -->
             <RowDefinition Height="Auto"/>
-            <!-- 1. Revenue Reports -->
             <RowDefinition Height="*"/>
-            <!-- 2 & 3. Promotions + Pricing -->
-            <RowDefinition Height="1.2*"/>
+            <RowDefinition Height="1.25*"/>
         </Grid.RowDefinitions>
 
-        <!-- HEADER + DUAL FUNCTION NAVIGATION TABS -->
         <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -43,7 +39,6 @@
             </StackPanel>
         </Grid>
 
-        <!-- 1. REVENUE REPORTS (LOADED DIRECTLY FROM INVOICE TABLE) -->
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="14" Margin="0,0,0,10"
                 Visibility="{Binding IsRevenueVisible, Converter={StaticResource BoolToVisibility}}">
             <Grid>
@@ -66,7 +61,6 @@
                     <Button Content="All" Command="{Binding ResetReportCommand}" Style="{StaticResource SecondaryButton}" Padding="14,4" Height="28"/>
                 </StackPanel>
 
-                <!-- Revenue DataGrid -->
                 <DataGrid Grid.Row="2" ItemsSource="{Binding RevenueList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" SelectionMode="Single">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Period / Date" Binding="{Binding Period}" Width="130"/>
@@ -80,14 +74,12 @@
             </Grid>
         </Border>
 
-        <!-- 2 & 3. PROMOTIONS & ROOM PRICING SECTION -->
         <Grid Grid.Row="2" Visibility="{Binding IsPricingVisible, Converter={StaticResource BoolToVisibility}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.15*"/>
                 <ColumnDefinition Width="0.85*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 2. PROMOTIONS MANAGEMENT -->
             <Border Grid.Column="0" Style="{StaticResource Card}" Padding="14" Margin="0,0,6,0">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -96,11 +88,11 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="2. Promotions Management" Style="{StaticResource SectionTitle}" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="0" Text="2. Promotions Management (Discount)" Style="{StaticResource SectionTitle}" Margin="0,0,0,8"/>
 
-                    <!-- Promotion Input Form -->
                     <Grid Grid.Row="1" Margin="0,0,0,8">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -125,11 +117,16 @@
                         <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding PromoEndDate}" Height="28" Margin="2"/>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Description:"/>
-                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding PromoDesc, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="2"/>
-                        <Button Grid.Row="2" Grid.Column="3" Content="Add Promo" Command="{Binding AddPromoCommand}" Style="{StaticResource PrimaryButton}" Height="28" Margin="2"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding PromoDesc, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="2"/>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                            <Button Content="Add Promo" Command="{Binding AddPromoCommand}" Style="{StaticResource PrimaryButton}" Height="28" Padding="10,4" Margin="2,0"/>
+                            <Button Content="Update" Command="{Binding UpdatePromoCommand}" Style="{StaticResource SecondaryButton}" Height="28" Padding="10,4" Margin="2,0"/>
+                            <Button Content="Delete" Command="{Binding DeletePromoCommand}" Style="{StaticResource DangerButton}" Height="28" Padding="10,4" Margin="2,0"/>
+                            <Button Content="Clear" Command="{Binding ClearPromoCommand}" Style="{StaticResource SecondaryButton}" Height="28" Padding="10,4" Margin="2,0"/>
+                        </StackPanel>
                     </Grid>
 
-                    <!-- Promotions DataGrid -->
                     <DataGrid Grid.Row="2" ItemsSource="{Binding PromotionList}" SelectedItem="{Binding SelectedPromotion, Mode=TwoWay}"
                               AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" SelectionMode="Single">
                         <DataGrid.Columns>
@@ -143,10 +140,10 @@
                 </Grid>
             </Border>
 
-            <!-- 3. ROOM PRICING & SURCHARGES (ROOM_TYPE TABLE) -->
             <Border Grid.Column="1" Style="{StaticResource Card}" Padding="14" Margin="6,0,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -154,19 +151,30 @@
 
                     <TextBlock Grid.Row="0" Text="3. Room Pricing &amp; Surcharges" Style="{StaticResource SectionTitle}" Margin="0,0,0,8"/>
 
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,6">
                         <Label Content="Weekend surcharge:" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding WeekendRate, UpdateSourceTrigger=PropertyChanged}" Width="55" Height="26" Margin="5,0,8,0"/>
-                        <Button Content="Save Surcharge" Command="{Binding SavePricingRuleCommand}" Style="{StaticResource PrimaryButton}" Height="28" Padding="12,4"/>
+                        <Button Content="Save Surcharge" Command="{Binding SavePricingRuleCommand}" Style="{StaticResource SecondaryButton}" Height="28" Padding="10,4"/>
                     </StackPanel>
 
-                    <!-- Room Types DataGrid -->
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding RoomTypeList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" SelectionMode="Single">
+                    <Grid Grid.Row="2" Margin="0,0,0,8" Background="#F0F4FA">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Price (VND):" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <TextBox Grid.Column="1" Text="{Binding EditRoomPrice, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="4,2"/>
+                        <Button Grid.Column="2" Content="Update Price" Command="{Binding UpdateRoomPriceCommand}" Style="{StaticResource PrimaryButton}" Height="28" Padding="12,4" Margin="4,2"/>
+                    </Grid>
+
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding RoomTypeList}" SelectedItem="{Binding SelectedRoomType, Mode=TwoWay}"
+                              AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" SelectionMode="Single">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding RoomTypeId}" Width="50"/>
-                            <DataGridTextColumn Header="Room Type" Binding="{Binding TypeName}" Width="110"/>
-                            <DataGridTextColumn Header="Capacity" Binding="{Binding Capacity}" Width="70"/>
-                            <DataGridTextColumn Header="Base Price (VND)" Binding="{Binding Price, StringFormat='{}{0:N0}'}" Width="120"/>
+                            <DataGridTextColumn Header="Room Type" Binding="{Binding TypeName}" Width="105"/>
+                            <DataGridTextColumn Header="Capacity" Binding="{Binding Capacity}" Width="65"/>
+                            <DataGridTextColumn Header="Base Price (VND)" Binding="{Binding Price, StringFormat='{}{0:N0}'}" Width="110"/>
                             <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
