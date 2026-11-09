@@ -53,14 +53,11 @@ public class BookingServicesViewModel : DatabaseViewModel
     public string Details { get => _details; set => SetProperty(ref _details, value); }
     public RelayCommand NewCommand { get; }
     public RelayCommand SaveCommand { get; }
-    public RelayCommand CancelOrderCommand { get; }
 
     public BookingServicesViewModel()
     {
         NewCommand = new RelayCommand(_ => SelectedOrder = null, _ => !IsBusy && CanManage);
         SaveCommand = DatabaseCommand(SaveAsync, () => CanEditOrder);
-        CancelOrderCommand = DatabaseCommand(CancelAsync, () => CanManage
-            && SelectedOrder is { IsLegacy: false, Status: "Pending" });
     }
 
     protected override async Task LoadDataAsync()
@@ -91,13 +88,5 @@ public class BookingServicesViewModel : DatabaseViewModel
         }
         await LoadDataAsync();
         Notify("Service order saved. Pending orders are not charged until completed.", "success");
-    }
-
-    private async Task CancelAsync()
-    {
-        if (SelectedOrder == null || SelectedOrder.IsLegacy) return;
-        await _manager.CancelPendingAsync(SelectedOrder.Id);
-        await LoadDataAsync();
-        Notify("Pending service order cancelled without a charge.", "success");
     }
 }
