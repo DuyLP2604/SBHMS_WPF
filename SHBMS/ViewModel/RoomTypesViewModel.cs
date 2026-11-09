@@ -20,7 +20,7 @@ public class RoomTypesViewModel : DatabaseViewModel
     public bool IsReadOnly => !CanManage;
     public string AccessHint =>
         CanManage
-        ? "Manager access: update the four room types RT01 to RT04 and their nightly prices."
+        ? "Manager access: add, update or delete room types and manage their nightly prices."
         : "View access: search, filter and select a room type to see its details.";
     public string FormTitle => CanManage && SelectedRoomType == null ? "New room type" : "Room type details";
     public string Summary => $"{RoomTypesView.Cast<object>().Count()} of {RoomTypes.Count} room types";
@@ -140,8 +140,8 @@ public class RoomTypesViewModel : DatabaseViewModel
                 || Contains(r.Name, SearchText.Trim()) || Contains(r.Description, SearchText.Trim()));
         RoomTypesView.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
         NewCommand = new RelayCommand(_ => SelectedRoomType = null, _ => CanManage && !IsBusy);
-        // The project uses only four room type IDs, from RT01 to RT04.
-        AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoomType == null && RoomTypes.Count < 4);
+        // New clears the selection so Manager can add another room type.
+        AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoomType == null);
         UpdateCommand = DatabaseCommand(UpdateAsync, () => CanManage && SelectedRoomType != null);
         DeleteCommand = DatabaseCommand(DeleteAsync, () => CanManage && SelectedRoomType != null);
         SearchCommand = new RelayCommand(_ => ApplyFilters(), _ => !IsBusy);

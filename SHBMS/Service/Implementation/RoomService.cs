@@ -211,23 +211,15 @@ public class RoomService : IRoomService
     });
 
     /// <summary>
-    /// Create a room type using an unused ID from RT01 to RT04.
+    /// Create a room type using the next four-character ID, from RT01 to RT99.
     /// </summary>
     public Task<bool> CreateRoomTypeAsync(RoomTypeCreateDto dto) => WriteAsync(async db =>
     {
         ValidateRoomType(dto);
         await CheckTypeNameAsync(db, dto.Name, null);
         var existingIds = await db.RoomTypes.Select(r => r.RoomTypeId).ToListAsync();
-        // Reuse a free ID within the four allowed types rather than creating RT05.
-        string roomTypeId = new[]
-        {
-            "RT01",
-            "RT02",
-            "RT03",
-            "RT04"
-        }
-            .FirstOrDefault(id => !existingIds.Contains(id))
-            ?? throw new InvalidOperationException("Only four room types are used: RT01 to RT04. Select an existing type to update it.");
+        // Generate the ID inside the same transaction that saves the room type.
+        string roomTypeId = EntityIds.Next(existingIds, "RT", 2);
         db.RoomTypes.Add(new RoomType
         {
             RoomTypeId = roomTypeId,
