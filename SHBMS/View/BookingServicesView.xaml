@@ -64,11 +64,11 @@
                                  Height="85" VerticalScrollBarVisibility="Auto" MaxLength="500" IsEnabled="{Binding CanEditOrder}"/>
                         <TextBlock Text="{Binding SelectionHint}" TextWrapping="Wrap" Foreground="#718096" Margin="0,12,0,8"/>
                         <TextBlock Text="Existing booking services keep their agreed unit prices." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,10"/>
-                        <WrapPanel>
-                            <Button Content="New" Command="{Binding NewCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,6,8"/>
-                            <Button Content="Save order" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,6,8"/>
-                            <Button Content="Cancel order" Command="{Binding CancelOrderCommand}" Style="{StaticResource DangerButton}" Margin="0,0,0,8"/>
-                        </WrapPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="New" Command="{Binding NewCommand}" Style="{StaticResource SecondaryButton}" Width="140" HorizontalAlignment="Left" Margin="0,0,6,8"/>
+                            <Button Content="Save order" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" Width="140" HorizontalAlignment="Right" Margin="0,0,6,8"/>
+                          
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
