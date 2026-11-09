@@ -40,7 +40,7 @@ public interface IRoomService
     Task<bool> DeleteRoomAsync(string roomId);
 
     /// <summary>
-    /// Create one of the four supported room types.
+    /// Create a room type with an automatically generated ID.
     /// </summary>
     Task<bool> CreateRoomTypeAsync(RoomTypeCreateDto dto);
 
