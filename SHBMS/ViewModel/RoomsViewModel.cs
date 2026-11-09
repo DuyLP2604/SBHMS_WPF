@@ -66,7 +66,7 @@ public class RoomsViewModel : DatabaseViewModel
     public RelayCommand NewCommand { get; }
     public RelayCommand AddCommand { get; }
     public RelayCommand UpdateCommand { get; }
-    public RelayCommand DeleteCommand { get; }
+    public RelayCommand DisableCommand { get; }
     public RelayCommand SearchCommand { get; }
     public RelayCommand ResetFiltersCommand { get; }
     public RelayCommand ChooseImageCommand { get; }
@@ -85,7 +85,7 @@ public class RoomsViewModel : DatabaseViewModel
         NewCommand = new RelayCommand(_ => SelectedRoom = null, _ => CanManage && !IsBusy);
         AddCommand = DatabaseCommand(AddAsync, () => CanManage && SelectedRoom == null);
         UpdateCommand = DatabaseCommand(UpdateAsync, () => CanManage && SelectedRoom != null);
-        DeleteCommand = DatabaseCommand(DeleteAsync, () => CanManage && SelectedRoom != null);
+        DisableCommand = DatabaseCommand(DeleteAsync, () => CanManage && SelectedRoom != null);
         SearchCommand = new RelayCommand(_ => RoomsView.Refresh(), _ => !IsBusy);
         ResetFiltersCommand = new RelayCommand(_ => { SearchText = ""; FilterRoomTypeId = ""; FilterStatus = "All statuses"; RoomsView.Refresh(); }, _ => !IsBusy);
         ChooseImageCommand = new RelayCommand(_ => ChooseImage(), _ => CanManage && !IsBusy);

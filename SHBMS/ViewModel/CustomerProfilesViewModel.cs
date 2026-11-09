@@ -46,7 +46,7 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
     public RelayCommand NewCommand { get; }
     public RelayCommand SaveCommand { get; }
-    public RelayCommand DeleteCommand { get; }
+    public RelayCommand DisableCommand { get; }
     public RelayCommand SearchCommand { get; }
     public RelayCommand ShowAllCommand { get; }
 
@@ -60,12 +60,11 @@ public class CustomerProfilesViewModel : DatabaseViewModel
              || Contains(c.IdentityNumber, SearchText.Trim())
              || Contains(c.Phone, SearchText.Trim())
              || Contains(c.Email, SearchText.Trim())
-             || Contains(c.Address, SearchText.Trim())
-             || Contains(c.NationalityName, SearchText.Trim()));
+             || Contains(c.Address, SearchText.Trim()));
 
         NewCommand = DatabaseCommand(CreateAsync);
         SaveCommand = DatabaseCommand(UpdateAsync);
-        DeleteCommand = DatabaseCommand(DeleteAsync);
+        DisableCommand = DatabaseCommand(DeleteAsync);
         SearchCommand = new RelayCommand(_ => Search(), _ => !IsBusy);
         ShowAllCommand = new RelayCommand(_ =>
         {
@@ -76,8 +75,12 @@ public class CustomerProfilesViewModel : DatabaseViewModel
 
     private static Customer EmptyCustomer() => new()
     {
-        CustomerId = "(auto)", FullName = "", Phone = "",
-        IdentityNumber = "", Email = "", Address = ""
+        CustomerId = "(auto)",
+        FullName = "",
+        Phone = "",
+        IdentityNumber = "",
+        Email = "",
+        Address = ""
     };
 
     private static Customer CopyCustomer(Customer source) => new()

@@ -224,7 +224,7 @@
                         <Button Content="Delete"
                                 Style="{StaticResource DangerButton}"
                                 Padding="12,7"
-                                Command="{Binding DeleteCommand}" />
+                                Command="{Binding DisableCommand}" />
                     </StackPanel>
                 </Grid>
                 <!-- CUSTOMER TABLE -->

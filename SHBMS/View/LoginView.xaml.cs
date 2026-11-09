@@ -2,14 +2,19 @@ using SHBMS.Service.Implementation;
 using SHBMS.ViewModel;
 using System.Windows;
 namespace SHBMS.View;
+
 public partial class LoginView : Window
 {
     private readonly LoginViewModel _vm;
     public LoginView()
     {
+        // Initialize the LoginViewModel with an instance of AuthenticationService
         _vm = new LoginViewModel(new AuthenticationService());
+        // Set the DataContext of the view to the LoginViewModel
         InitializeComponent();
+        // Set the DataContext of the view to the LoginViewModel
         DataContext = _vm;
+        // Subscribe to the LoginSucceeded event to handle successful login
         _vm.LoginSucceeded += () =>
         {
             var main = new MainWindow();

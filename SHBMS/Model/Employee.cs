@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace SHBMS.Model;
+﻿namespace SHBMS.Model;
 
 public partial class Employee
 {
@@ -32,6 +29,8 @@ public partial class Employee
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     public virtual ICollection<RoomAssignment> RoomAssignments { get; set; } = new List<RoomAssignment>();
+
+    public virtual ICollection<ServiceRequest> ServiceRequests { get; set; } = new List<ServiceRequest>();
 
     public virtual User User { get; set; } = null!;
 }

@@ -24,17 +24,17 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- PAGE HEADER (Cấu trúc chuẩn của cả hệ thống) -->
+        <!-- PAGE HEADER-->
         <StackPanel Grid.Row="0" Margin="0,0,0,14">
             <TextBlock Text="SYSTEM ADMINISTRATION" Foreground="#4169E1" FontSize="10" FontWeight="Bold" />
             <TextBlock Text="Staff accounts" FontSize="25" FontWeight="Bold" Foreground="#13233C" Margin="0,2,0,2"/>
             <TextBlock Text="Manage employee login credentials, roles, and active access statuses." FontSize="12" Foreground="#718096" />
         </StackPanel>
 
-        <!-- FORM CẬP NHẬT TÀI KHOẢN -->
+        <!-- FORM UPDATE-->
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16" Margin="0,0,0,14">
             <StackPanel>
-<TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,0,0,8" />
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,0,0,8" />
                 <Grid Margin="0,0,0,14">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -96,7 +96,30 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
                     <Button Content="Add account" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}" Padding="14,8" Margin="0,0,8,0" />
                     <Button Content="Save account" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" Padding="14,8" />
-                    <Button Content="Delete account" Style="{StaticResource DangerButton}" Command="{Binding DeleteCommand}" Padding="14,8" Margin="8,0,0,0" />
+                    <Button Content="Enable account" Command="{Binding EnableCommand}" Padding="14,8" Margin="8,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedAccount.IsActive}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="Disable account" Command="{Binding DisableCommand}" Padding="14,8" Margin="8,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource DangerButton}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedAccount.IsActive}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -117,30 +140,39 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Staff directory" FontSize="16" FontWeight="SemiBold" Foreground="#13233C" />
-                        <TextBlock Text="Active employee system accounts" FontSize="11" Foreground="#8793A6" />
+                        <TextBlock Text="Employee system accounts" FontSize="11" Foreground="#8793A6" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="170" Height="36" Margin="0,0,8,0" ToolTip="Search by username, name or role" />
                         <Button Content="Search" Style="{StaticResource PrimaryButton}" Padding="12,7" Command="{Binding SearchCommand}" Margin="0,0,6,0" />
                         <Button Content="All" Style="{StaticResource SecondaryButton}" Padding="12,7" Command="{Binding ShowAllCommand}" Margin="0,0,6,0" />
-                        <TextBlock Text="Account locking is not available in the current schema." TextWrapping="Wrap" Width="160" FontSize="11" Foreground="#718096" />
                     </StackPanel>
                 </Grid>
 
                 <!-- DATAGRID TỰ ĐỘNG DÙNG STYLE TỪ ModernStyles.xaml -->
                 <DataGrid x:Name="StaffGrid" ItemsSource="{Binding AccountsView}" SelectedItem="{Binding SelectedAccount}"
-                          Grid.Row="1"
-                          AutoGenerateColumns="False"
-                          CanUserAddRows="False"
-                          CanUserReorderColumns="False"
-                          IsReadOnly="True"
-                          SelectionMode="Single"
-                          GridLinesVisibility="Horizontal"
-                          HorizontalGridLinesBrush="#EDF1F7"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                         >
+          Grid.Row="1"
+          AutoGenerateColumns="False"
+          CanUserAddRows="False"
+          CanUserReorderColumns="False"
+          IsReadOnly="True"
+          SelectionMode="Single"
+          GridLinesVisibility="Horizontal"
+          HorizontalGridLinesBrush="#EDF1F7"
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch">
+
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                    <Setter Property="Foreground" Value="#9AA5B8" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="USERNAME" Binding="{Binding Username}" Width="130" MinWidth="110" />
                         <DataGridTextColumn Header="FULL NAME" Binding="{Binding FullName}" Width="180" MinWidth="150" />
@@ -148,6 +180,26 @@
                         <DataGridTextColumn Header="PHONE" Binding="{Binding Phone}" Width="120" MinWidth="110" />
                         <DataGridTextColumn Header="EMAIL" Binding="{Binding Email}" Width="180" MinWidth="150" />
 
+                        <DataGridTemplateColumn Header="STATUS" Width="100" MinWidth="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock VerticalAlignment="Center" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Active" />
+                                                <Setter Property="Foreground" Value="#15803D" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                        <Setter Property="Text" Value="Disabled" />
+                                                        <Setter Property="Foreground" Value="#B91C1C" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace SHBMS.Model;
+﻿namespace SHBMS.Model;
 
 public partial class Payment
 {

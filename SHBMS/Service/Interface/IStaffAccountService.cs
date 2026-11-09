@@ -8,9 +8,10 @@ namespace SHBMS.Service.Interface
         Task<AccountDto> GetStaffAccountByIdAsync(int accountId);
         Task<bool> CreateStaffAccountAsync(AccountCreateDto dto);
         Task<bool> UpdateStaffAccountAsync(AccountUpdateDto dto);
-        Task<bool> ToggleAccountStatusAsync(int accountId, bool isActive);
-        Task<bool> DeleteStaffAccountAsync(int accountId);
+        Task<bool> ToggleAccountStatusAsync(int accountId, bool IsActive);
+        Task<bool> DeactivateStaffAccountAsync(int accountId);
         Task<bool> UpdatePasswordAsync(int userId, string newPassword);
+        Task<bool> ReactivateStaffAccountAsync(int accountId);
 
     }
 }

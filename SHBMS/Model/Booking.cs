@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace SHBMS.Model;
+﻿namespace SHBMS.Model;
 
 public partial class Booking
 {
@@ -23,13 +20,13 @@ public partial class Booking
 
     public DateTime? CheckInDeadlineOverride { get; set; }
 
-    public DateTime? CheckInDeadline { get; set; }
-
     public bool IsDeleted { get; set; }
 
     public DateTime? DeletedAt { get; set; }
 
     public string? DeletedByEmployee { get; set; }
+
+    public DateTime? CheckInDeadline { get; set; }
 
     public virtual ICollection<BookingDetail> BookingDetails { get; set; } = new List<BookingDetail>();
 
@@ -44,4 +41,6 @@ public partial class Booking
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
+    public virtual ICollection<ServiceRequest> ServiceRequests { get; set; } = new List<ServiceRequest>();
 }

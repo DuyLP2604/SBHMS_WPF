@@ -6,6 +6,7 @@ using SHBMS.Service.Interface;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Mail;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
 
@@ -56,6 +57,7 @@ public class StaffAccountViewModel : DatabaseViewModel
             Role = value?.Role ?? "Staff";
             NewPassword = "";
             OnPropertyChanged(nameof(IsNew));
+            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -63,7 +65,9 @@ public class StaffAccountViewModel : DatabaseViewModel
     public RelayCommand SaveCommand { get; }
     public RelayCommand SearchCommand { get; }
     public RelayCommand ShowAllCommand { get; }
-    public RelayCommand DeleteCommand { get; }
+    public RelayCommand DisableCommand { get; }
+    public RelayCommand EnableCommand { get; }
+
 
     public StaffAccountViewModel() : this(new StaffAccountService(new Prn212SbhmsContext())) { }
 
@@ -77,20 +81,20 @@ public class StaffAccountViewModel : DatabaseViewModel
             || Contains(u.FullName, SearchText.Trim())
             || Contains(u.Role, SearchText.Trim()));
 
-        // Chặn quyền New (Chỉ Admin mới thao tác được - độc quyền)
+        // Only Admin can create new accounts, so disable the NewCommand for non-admin users
         NewCommand = new RelayCommand(_ => SelectedAccount = null, _ => !IsBusy && Session.IsAdmin);
 
-        // Chặn quyền Save (Chỉ Admin mới thao tác được)
+        // Only Admin can save accounts, so disable the SaveCommand for non-admin users
         SaveCommand = DatabaseCommand(SaveAsync, () => Session.IsAdmin);
-        DeleteCommand = DatabaseCommand(DeleteAccountAsync, () => Session.IsAdmin && SelectedAccount != null);
-        SearchCommand = new RelayCommand(_ => AccountsView.Refresh(), _ => !IsBusy);
+        DisableCommand = DatabaseCommand(DisableAccountAsync, () => Session.IsAdmin && SelectedAccount is { IsActive: true });
+        EnableCommand = DatabaseCommand(EnableAccountAsync, () => Session.IsAdmin && SelectedAccount is { IsActive: false }); SearchCommand = new RelayCommand(_ => AccountsView.Refresh(), _ => !IsBusy);
         ShowAllCommand = new RelayCommand(_ => { SearchText = ""; AccountsView.Refresh(); }, _ => !IsBusy);
         SelectedAccount = null;
     }
 
     protected override async Task LoadDataAsync()
     {
-        // Kiểm tra độc quyền Admin ngay từ khâu load
+        // Check if the current user is an Admin before loading staff accounts
         if (!Session.IsAdmin)
         {
             StatusMessage = "Access Denied: Only Admin can view and manage staff accounts.";
@@ -126,13 +130,19 @@ public class StaffAccountViewModel : DatabaseViewModel
             return;
         }
 
+        if (!Regex.IsMatch(Phone.Trim(), @"^(0|\+84)[3|5|7|8|9][0-9]{8}$"))
+        {
+            StatusMessage = "Invalid phone number format.";
+            return;
+        }
+
         if ((IsNew || NewPassword.Length > 0) && NewPassword.Length < 6)
         {
             StatusMessage = "Password must have at least 6 characters.";
             return;
         }
 
-        // Không cho phép Admin hạ quyền chính mình
+        // Do not allow an admin to change their own role to a non-admin role
         if (SelectedAccount is { } selected && selected.UserId == Session.CurrentAccount?.UserId && Role != selected.Role)
         {
             StatusMessage = "Use another administrator account to change your own role.";
@@ -183,37 +193,56 @@ public class StaffAccountViewModel : DatabaseViewModel
             StatusMessage = "Account saved successfully.";
         }
     }
-    private async Task DeleteAccountAsync()
+    private async Task DisableAccountAsync()
     {
         if (!Session.IsAdmin || SelectedAccount == null) return;
 
-        // Không cho phép Admin tự xóa chính mình
+        // Prevent an admin from disabling their own account
         if (SelectedAccount.UserId == Session.CurrentAccount?.UserId)
         {
-            StatusMessage = "You cannot delete your own account.";
+            StatusMessage = "You cannot disable your own account.";
             return;
         }
 
-        // Hiển thị hộp thoại xác nhận
+        if (!SelectedAccount.IsActive)
+        {
+            StatusMessage = $"Account '{SelectedAccount.Username}' is already disabled.";
+            return;
+        }
+
+        // Keep the values locally because LoadDataAsync() resets SelectedAccount to null
+        int userId = SelectedAccount.UserId;
+        string username = SelectedAccount.Username;
+
         var result = MessageBox.Show(
-            $"Are you sure you want to delete the account '{SelectedAccount.Username}' and all related employee data?",
-            "Confirm Delete",
+            $"Are you sure you want to disable the account '{username}'?\n" +
+            "The employee will no longer be able to log in, but their booking and payment history will be kept.",
+            "Confirm Disable",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
 
         if (result != MessageBoxResult.Yes) return;
 
-        // Chỉ thực thi logic xóa, không cần IsBusy = true hay try/catch nữa
-        bool success = await _service.DeleteStaffAccountAsync(SelectedAccount.UserId);
+        bool success = await _service.DeactivateStaffAccountAsync(userId);
+        if (success) await LoadDataAsync();
 
-        if (success)
-        {
-            StatusMessage = $"Account '{SelectedAccount.Username}' deleted successfully.";
-            await LoadDataAsync(); // Refresh lại DataGrid
-        }
-        else
-        {
-            StatusMessage = "Failed to delete account. It may have already been removed.";
-        }
+        StatusMessage = success
+            ? $"Account '{username}' disabled successfully."
+            : "Failed to disable account. It may no longer exist.";
+    }
+
+    private async Task EnableAccountAsync()
+    {
+        if (!Session.IsAdmin || SelectedAccount == null || SelectedAccount.IsActive) return;
+
+        int userId = SelectedAccount.UserId;
+        string username = SelectedAccount.Username;
+
+        bool success = await _service.ReactivateStaffAccountAsync(userId);
+        if (success) await LoadDataAsync();
+
+        StatusMessage = success
+            ? $"Account '{username}' enabled successfully."
+            : "Failed to enable account. It may no longer exist.";
     }
 }

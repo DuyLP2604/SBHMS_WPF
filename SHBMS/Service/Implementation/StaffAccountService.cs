@@ -25,11 +25,13 @@ namespace SHBMS.Service.Implementation
             return users.Select(u => new AccountDto
             {
                 UserId = u.UserId,
+                EmployeeId = u.Employee?.EmployeeId,
                 Username = u.Username,
                 Role = u.Role,
                 FullName = u.Employee?.FullName ?? u.Username,
                 Email = u.Employee?.Email,
-                Phone = u.Employee?.Phone
+                Phone = u.Employee?.Phone,
+                IsActive = u.IsActive
             });
         }
 
@@ -45,11 +47,13 @@ namespace SHBMS.Service.Implementation
             return new AccountDto
             {
                 UserId = u.UserId,
+                EmployeeId = u.Employee?.EmployeeId,
                 Username = u.Username,
                 Role = u.Role,
                 FullName = u.Employee?.FullName ?? u.Username,
                 Email = u.Employee?.Email,
-                Phone = u.Employee?.Phone
+                Phone = u.Employee?.Phone,
+                IsActive = u.IsActive
             };
         }
 
@@ -64,6 +68,7 @@ namespace SHBMS.Service.Implementation
                 Username = dto.Username.Trim(),
                 Password = PasswordHelper.Hash(dto.Password),
                 Role = dto.Role,
+                IsActive = true,
                 Employee = new Employee
                 {
                     // Tạo EmployeeId tự động
@@ -120,25 +125,22 @@ namespace SHBMS.Service.Implementation
             return true;
         }
 
-        public Task<bool> ToggleAccountStatusAsync(int accountId, bool isActive)
+        // Replaces the old NotSupportedException version
+        public async Task<bool> ToggleAccountStatusAsync(int accountId, bool IsActive)
         {
-            // Theo như file UI của bạn ghi: "Account locking is not available in the current schema"
-            throw new NotSupportedException("Database schema current does not support locking accounts.");
-        }
-        public async Task<bool> DeleteStaffAccountAsync(int accountId)
-        {
-            var user = await _context.Users
-                .Include(u => u.Employee)
-                .FirstOrDefaultAsync(u => u.UserId == accountId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == accountId);
             if (user == null) return false;
-            // Xóa Employee trước, sau đó xóa User
-            if (user.Employee != null)
-            {
-                _context.Employees.Remove(user.Employee);
-            }
-            _context.Users.Remove(user);
+
+            user.IsActive = IsActive;
             await _context.SaveChangesAsync();
             return true;
         }
+
+        // Soft delete: keep Employee and User rows so booking/payment/invoice history stays intact
+        public Task<bool> DeactivateStaffAccountAsync(int accountId)
+            => ToggleAccountStatusAsync(accountId, false);
+
+        public Task<bool> ReactivateStaffAccountAsync(int accountId)
+            => ToggleAccountStatusAsync(accountId, true);
     }
 }

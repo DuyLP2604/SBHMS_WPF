@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace SHBMS.Model;
@@ -45,6 +43,8 @@ public partial class Prn212SbhmsContext : DbContext
 
     public virtual DbSet<Service> Services { get; set; }
 
+    public virtual DbSet<ServiceRequest> ServiceRequests { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<VwBookingDetail> VwBookingDetails { get; set; }
@@ -52,9 +52,6 @@ public partial class Prn212SbhmsContext : DbContext
     public virtual DbSet<VwBookingList> VwBookingLists { get; set; }
 
     public virtual DbSet<VwRoomList> VwRoomLists { get; set; }
-
-    public virtual DbSet<ServiceRequest> ServiceRequests { get; set; }
-
 
     //Tạo phương thức lấy chuỗi kết nối từ file appsettings.json
     private string GetConnectionString()
@@ -73,77 +70,8 @@ public partial class Prn212SbhmsContext : DbContext
         if (!optionsBuilder.IsConfigured)
             optionsBuilder.UseSqlServer(GetConnectionString());
     }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
-        modelBuilder.Entity<ServiceRequest>(entity =>
-        {
-            entity.ToTable("SERVICE_REQUEST");
-
-            entity.HasKey(e => e.RequestId);
-
-            entity.Property(e => e.RequestId)
-                .HasColumnName("RequestID")
-                .ValueGeneratedOnAdd();
-
-            entity.Property(e => e.BookingId)
-                .HasColumnName("BookingID")
-                .HasMaxLength(6)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .IsRequired();
-
-            entity.Property(e => e.ServiceId)
-                .HasColumnName("ServiceID")
-                .HasMaxLength(4)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .IsRequired();
-
-            entity.Property(e => e.Quantity).HasDefaultValue(1);
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.BilledAt).HasColumnType("datetime2");
-            entity.HasIndex(e => new { e.BookingId, e.RequestStatus }, "IX_SERVICE_REQUEST_Booking_Status");
-
-            entity.Property(e => e.RequestDescription)
-                .HasMaxLength(500)
-                .IsRequired();
-
-            entity.Property(e => e.RequestStatus)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Pending");
-
-            entity.Property(e => e.CreatedAt)
-                .HasColumnType("datetime2")
-                .HasDefaultValueSql("SYSDATETIME()");
-
-            entity.Property(e => e.ResolvedAt)
-                .HasColumnType("datetime2");
-
-            entity.Property(e => e.HandledByEmployeeId)
-                .HasColumnName("HandledByEmployeeID")
-                .HasMaxLength(6)
-                .IsUnicode(false)
-                .IsFixedLength();
-
-            entity.HasOne<Booking>()
-                .WithMany()
-                .HasForeignKey(e => e.BookingId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            entity.HasOne<Service>()
-                .WithMany()
-                .HasForeignKey(e => e.ServiceId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            entity.HasOne<Employee>()
-                .WithMany()
-                .HasForeignKey(e => e.HandledByEmployeeId)
-                .OnDelete(DeleteBehavior.NoAction);
-        });
-
         modelBuilder.Entity<Booking>(entity =>
         {
             entity.ToTable("BOOKING", tb => tb.HasTrigger("trg_BOOKING_BlockPhysicalDelete"));
@@ -577,14 +505,58 @@ public partial class Prn212SbhmsContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("ServiceID");
+            entity.Property(e => e.IsAvailable).HasDefaultValue(true);
             entity.Property(e => e.ServiceName).HasMaxLength(60);
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.IsAvailable)
-        .HasDefaultValue(true);
-
-            entity.Property(e => e.StockQuantity);
         });
 
+        modelBuilder.Entity<ServiceRequest>(entity =>
+        {
+            entity.HasKey(e => e.RequestId);
+
+            entity.ToTable("SERVICE_REQUEST");
+
+            entity.HasIndex(e => new { e.BookingId, e.RequestStatus }, "IX_SERVICE_REQUEST_Booking_Status");
+
+            entity.Property(e => e.RequestId).HasColumnName("RequestID");
+            entity.Property(e => e.BookingId)
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("BookingID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.HandledByEmployeeId)
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("HandledByEmployeeID");
+            entity.Property(e => e.Quantity).HasDefaultValue(1);
+            entity.Property(e => e.RequestDescription).HasMaxLength(500);
+            entity.Property(e => e.RequestStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Pending");
+            entity.Property(e => e.ServiceId)
+                .HasMaxLength(4)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("ServiceID");
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
+
+            entity.HasOne(d => d.Booking).WithMany(p => p.ServiceRequests)
+                .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ServiceRequest_Booking");
+
+            entity.HasOne(d => d.HandledByEmployee).WithMany(p => p.ServiceRequests)
+                .HasForeignKey(d => d.HandledByEmployeeId)
+                .HasConstraintName("FK_ServiceRequest_Employee");
+
+            entity.HasOne(d => d.Service).WithMany(p => p.ServiceRequests)
+                .HasForeignKey(d => d.ServiceId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ServiceRequest_Service");
+        });
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -593,6 +565,7 @@ public partial class Prn212SbhmsContext : DbContext
             entity.HasIndex(e => e.Username, "UQ_USERS_Username").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Password)
                 .HasMaxLength(255)
                 .IsUnicode(false);

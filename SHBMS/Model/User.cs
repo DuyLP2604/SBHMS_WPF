@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace SHBMS.Model;
+﻿namespace SHBMS.Model;
 
 public partial class User
 {
@@ -12,6 +9,8 @@ public partial class User
     public string Password { get; set; } = null!;
 
     public string Role { get; set; } = null!;
+
+    public bool IsActive { get; set; }
 
     public virtual Employee? Employee { get; set; }
 }

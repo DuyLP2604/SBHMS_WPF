@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace SHBMS.Model;
+﻿namespace SHBMS.Model;
 
 public partial class Customer
 {
@@ -24,7 +21,4 @@ public partial class Customer
     public virtual ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
 
     public virtual Nationality? Nationality { get; set; }
-
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public string? NationalityName => Nationality?.NationalityName;
 }

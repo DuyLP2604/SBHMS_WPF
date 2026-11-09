@@ -1,27 +1,32 @@
+﻿namespace SHBMS.Model;
 
-using System;
-
-namespace SHBMS.Model;
-
-public class ServiceRequest
+public partial class ServiceRequest
 {
     public int RequestId { get; set; }
 
-    public string BookingId { get; set; } = "";
+    public string BookingId { get; set; } = null!;
 
-    public string ServiceId { get; set; } = "";
+    public string ServiceId { get; set; } = null!;
 
-    public int Quantity { get; set; } = 1;
-    public decimal UnitPrice { get; set; }
-    public DateTime? BilledAt { get; set; }
+    public string RequestDescription { get; set; } = null!;
 
-    public string RequestDescription { get; set; } = "";
-
-    public string RequestStatus { get; set; } = "Pending";
+    public string RequestStatus { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime? ResolvedAt { get; set; }
 
     public string? HandledByEmployeeId { get; set; }
+
+    public int Quantity { get; set; }
+
+    public decimal UnitPrice { get; set; }
+
+    public DateTime? BilledAt { get; set; }
+
+    public virtual Booking Booking { get; set; } = null!;
+
+    public virtual Employee? HandledByEmployee { get; set; }
+
+    public virtual Service Service { get; set; } = null!;
 }
